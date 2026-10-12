@@ -1685,30 +1685,550 @@
       { id: 'E7', title: '7. Evidence of competency / compliance regarding PPE', desc: 'Kompetensi: Knowledge, kesesuaian, teknik penggunaan, pelupusan' }
     ];
 
+    window.renderPPEItems = function() {
+      const container = document.getElementById('ppe-items-container');
+      if (!container) return;
+      container.innerHTML = PPE_CRITERIA.map((item) => `
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200" id="card-${item.id}">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-emerald-700">CRITERIA ${item.id}</span>
+            <span class="text-[11px] text-slate-400 font-semibold">Weight: 15% Shared</span>
+          </div>
+          <h4 class="text-sm font-bold text-slate-900 mt-0.5">${item.title}</h4>
+          <p class="text-xs text-slate-500 mt-0.5">${item.desc}</p>
+
+          <div class="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs">
+            <label class="p-2.5 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-center space-x-2">
+              <input type="radio" name="${item.id}" value="4" class="text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
+              <span><b>4 Marks:</b> Compliant</span>
+            </label>
+            <label class="p-2.5 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-center space-x-2">
+              <input type="radio" name="${item.id}" value="3" class="text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
+              <span><b>3 Marks:</b> Partial</span>
+            </label>
+            <label class="p-2.5 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-center space-x-2">
+              <input type="radio" name="${item.id}" value="2" class="text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
+              <span><b>2 Marks:</b> Inadequate</span>
+            </label>
+            <label class="p-2.5 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-center space-x-2">
+              <input type="radio" name="${item.id}" value="1" class="text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
+              <span><b>1 Mark:</b> Non-compliant</span>
+            </label>
+            <label class="p-2.5 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-amber-500 flex items-center space-x-2 bg-amber-50/50">
+              <input type="radio" name="${item.id}" value="NA" class="text-amber-600 focus:ring-amber-500" onchange="calculateSectionE()">
+              <span class="text-amber-800 font-bold">N/A (Exclude)</span>
+            </label>
+          </div>
+
+          <div class="mt-2.5">
+            <input type="text" id="note-${item.id}" placeholder="Catatan / Notes untuk ${item.id}..." class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
+          </div>
+        </div>
+      `).join('');
+    };
+
+    function getRadioVal(name) {
+      const el = document.querySelector(`input[name="${name}"]:checked`);
+      return el ? el.value : null;
+    }
+
+    window.calculateSectionA = function() {
+      const a1 = parseInt(getRadioVal('A1') || 0, 10);
+      const a2 = parseInt(getRadioVal('A2') || 0, 10);
+      const a3 = parseInt(getRadioVal('A3') || 0, 10);
+      const num = a1 + a2 + a3;
+      const denom = 12;
+      const pm = (num / denom) * 100;
+      const wm = (pm * 0.20);
+
+      currentAuditData.scores.A = { num, denom, pm, weight: 20, weightedMark: wm };
+      const numEl = document.getElementById('score-num-A');
+      const pctEl = document.getElementById('score-pct-A');
+      if (numEl) numEl.innerText = num;
+      if (pctEl) pctEl.innerText = pm.toFixed(1);
+
+      calculateAll();
+    };
+
+    window.calculateSectionB = function() {
+      const b1 = parseInt(getRadioVal('B1') || 0, 10);
+      const b3 = parseInt(getRadioVal('B3') || 0, 10);
+      const b4 = parseInt(getRadioVal('B4') || 0, 10);
+      const num = b1 + b3 + b4;
+      const denom = 12;
+      const pm = (num / denom) * 100;
+      const wm = (pm * 0.15);
+
+      currentAuditData.scores.B = { num, denom, pm, weight: 15, weightedMark: wm };
+      const numEl = document.getElementById('score-num-B');
+      const pctEl = document.getElementById('score-pct-B');
+      if (numEl) numEl.innerText = num;
+      if (pctEl) pctEl.innerText = pm.toFixed(1);
+
+      calculateAll();
+    };
+
+    window.calculateSectionC = function() {
+      const c1 = parseInt(getRadioVal('C1') || 0, 10);
+      const c2 = parseInt(getRadioVal('C2') || 0, 10);
+      const c3 = parseInt(getRadioVal('C3') || 0, 10);
+      const c4 = parseInt(getRadioVal('C4') || 0, 10);
+      const c5 = parseInt(getRadioVal('C5') || 0, 10);
+      const c6 = parseInt(getRadioVal('C6') || 0, 10);
+      const num = c1 + c2 + c3 + c4 + c5 + c6;
+      const denom = 24;
+      const pm = (num / denom) * 100;
+      const wm = (pm * 0.10);
+
+      currentAuditData.scores.C = { num, denom, pm, weight: 10, weightedMark: wm };
+      const numEl = document.getElementById('score-num-C');
+      const pctEl = document.getElementById('score-pct-C');
+      if (numEl) numEl.innerText = num;
+      if (pctEl) pctEl.innerText = pm.toFixed(1);
+
+      calculateAll();
+    };
+
+    window.calculateSectionD = function() {
+      const d1 = parseInt(getRadioVal('D1') || 0, 10);
+      const d2 = parseInt(getRadioVal('D2') || 0, 10);
+      const d3 = parseInt(getRadioVal('D3') || 0, 10);
+      const d4 = parseInt(getRadioVal('D4') || 0, 10);
+      const num = d1 + d2 + d3 + d4;
+      const denom = 16;
+      const pm = (num / denom) * 100;
+      const wm = (pm * 0.10);
+
+      currentAuditData.scores.D = { num, denom, pm, weight: 10, weightedMark: wm };
+      const numEl = document.getElementById('score-num-D');
+      const pctEl = document.getElementById('score-pct-D');
+      if (numEl) numEl.innerText = num;
+      if (pctEl) pctEl.innerText = pm.toFixed(1);
+
+      calculateAll();
+    };
+
+    window.calculateSectionE = function() {
+      let num = 0;
+      let tac = 0;
+
+      PPE_CRITERIA.forEach((item) => {
+        const val = getRadioVal(item.id);
+        if (val && val !== 'NA') {
+          tac += 1;
+          num += parseInt(val, 10);
+        }
+      });
+
+      const denom = tac > 0 ? (tac * 4) : 28;
+      const pm = tac > 0 ? (num / denom) * 100 : 0;
+      const wm = (pm * 0.15);
+
+      currentAuditData.scores.E = { num, denom, tac, pm, weight: 15, weightedMark: wm };
+      const numEl = document.getElementById('score-num-E');
+      const denomEl = document.getElementById('score-denom-E');
+      const pctEl = document.getElementById('score-pct-E');
+      if (numEl) numEl.innerText = num;
+      if (denomEl) denomEl.innerText = denom;
+      if (pctEl) pctEl.innerText = pm.toFixed(1);
+
+      calculateAll();
+    };
+
+    window.calculateSectionF = function() {
+      let pm = 0;
+      if (activeEngMode === 'F1') {
+        const g1 = parseInt(document.getElementById('f1-1-1')?.value || 0, 10);
+        const g3 = parseInt(document.getElementById('f1-1-3')?.value || 0, 10);
+        const genPct = ((g1 + g3) / 2) * 5;
+
+        const ach = parseInt(document.getElementById('f1-ach')?.value || 0, 10);
+        const flow = parseInt(document.getElementById('f1-flow')?.value || 0, 10);
+        const cross = parseInt(document.getElementById('f1-cross')?.value || 0, 10);
+        const ventPct = ((ach + flow + cross) / 9) * 95;
+
+        const uv = parseInt(document.getElementById('f1-tech-uv')?.value || 0, 10);
+        const pur = parseInt(document.getElementById('f1-tech-purifier')?.value || 0, 10);
+        const techBonus = ((uv + pur) / 2) * 5;
+
+        pm = Math.min(100, genPct + ventPct + techBonus);
+      } else {
+        const ante = parseInt(document.getElementById('f2-anteroom')?.value || 0, 10);
+        const ceil = parseInt(document.getElementById('f2-ceiling')?.value || 0, 10);
+        const neg = parseInt(document.getElementById('f2-neg-status')?.value || 0, 10);
+        const genPct = ((ante + ceil + neg) / 3) * 10;
+
+        const ach = parseInt(document.getElementById('f2-ach')?.value || 0, 10);
+        const mon = parseInt(document.getElementById('f2-monitor')?.value || 0, 10);
+        const flow = parseInt(document.getElementById('f2-flow')?.value || 0, 10);
+        const cross = parseInt(document.getElementById('f2-cross')?.value || 0, 10);
+        const maint = parseInt(document.getElementById('f2-maint')?.value || 0, 10);
+        const ventPct = ((ach + mon + flow + cross + maint) / 8) * 70;
+
+        const roof = parseInt(document.getElementById('f2-roof')?.value || 0, 10);
+        const hepa = parseInt(document.getElementById('f2-hepa')?.value || 0, 10);
+        const exMaint = parseInt(document.getElementById('f2-ex-maint')?.value || 0, 10);
+        const exPct = ((roof + hepa + exMaint) / 3) * 20;
+
+        pm = Math.min(100, genPct + ventPct + exPct);
+      }
+
+      const wm = (pm * 0.30);
+      currentAuditData.scores.F = { mode: activeEngMode, pm, weight: 30, weightedMark: wm };
+      const pctEl = document.getElementById('score-pct-F');
+      if (pctEl) pctEl.innerText = pm.toFixed(1);
+
+      calculateAll();
+    };
+
+    window.calculateAll = function() {
+      const s = currentAuditData.scores;
+      const totalWeighted = (s.A?.weightedMark || 0) + 
+                            (s.B?.weightedMark || 0) + 
+                            (s.C?.weightedMark || 0) + 
+                            (s.D?.weightedMark || 0) + 
+                            (s.E?.weightedMark || 0) + 
+                            (s.F?.weightedMark || 0);
+
+      currentAuditData.finalScore = totalWeighted;
+
+      let category = "Pending Assessment";
+      let badgeClass = "bg-slate-200 text-slate-700";
+
+      if (totalWeighted > 0) {
+        if (totalWeighted >= 80) {
+          category = "Low Risk (Rendah)";
+          badgeClass = "bg-emerald-100 text-emerald-800 border border-emerald-300";
+        } else if (totalWeighted >= 60) {
+          category = "Medium Risk (Sederhana)";
+          badgeClass = "bg-amber-100 text-amber-800 border border-amber-300";
+        } else if (totalWeighted >= 40) {
+          category = "High Risk (Tinggi)";
+          badgeClass = "bg-orange-100 text-orange-800 border border-orange-300";
+        } else {
+          category = "Critical Risk (Kritikal)";
+          badgeClass = "bg-rose-100 text-rose-800 border border-rose-300";
+        }
+      }
+
+      currentAuditData.riskCategory = category;
+
+      // Update Form scorecard
+      const dispScore = document.getElementById('disp-overall-score');
+      const dispBadge = document.getElementById('disp-risk-badge');
+      if (dispScore) dispScore.innerText = totalWeighted.toFixed(1);
+      if (dispBadge) {
+        dispBadge.innerText = category;
+        dispBadge.className = `px-3.5 py-2 rounded-xl text-center font-bold text-xs shadow-sm uppercase tracking-wide ${badgeClass}`;
+      }
+
+      // Update Report table numbers
+      const repNumA = document.getElementById('rep-tab-num-a');
+      const repPmA = document.getElementById('rep-tab-pm-a');
+      const repWmA = document.getElementById('rep-tab-wm-a');
+      if (repNumA) repNumA.innerText = s.A?.num || 0;
+      if (repPmA) repPmA.innerText = `${(s.A?.pm || 0).toFixed(1)}%`;
+      if (repWmA) repWmA.innerText = (s.A?.weightedMark || 0).toFixed(1);
+
+      const repNumB = document.getElementById('rep-tab-num-b');
+      const repPmB = document.getElementById('rep-tab-pm-b');
+      const repWmB = document.getElementById('rep-tab-wm-b');
+      if (repNumB) repNumB.innerText = s.B?.num || 0;
+      if (repPmB) repPmB.innerText = `${(s.B?.pm || 0).toFixed(1)}%`;
+      if (repWmB) repWmB.innerText = (s.B?.weightedMark || 0).toFixed(1);
+
+      const repNumC = document.getElementById('rep-tab-num-c');
+      const repPmC = document.getElementById('rep-tab-pm-c');
+      const repWmC = document.getElementById('rep-tab-wm-c');
+      if (repNumC) repNumC.innerText = s.C?.num || 0;
+      if (repPmC) repPmC.innerText = `${(s.C?.pm || 0).toFixed(1)}%`;
+      if (repWmC) repWmC.innerText = (s.C?.weightedMark || 0).toFixed(1);
+
+      const repNumD = document.getElementById('rep-tab-num-d');
+      const repPmD = document.getElementById('rep-tab-pm-d');
+      const repWmD = document.getElementById('rep-tab-wm-d');
+      if (repNumD) repNumD.innerText = s.D?.num || 0;
+      if (repPmD) repPmD.innerText = `${(s.D?.pm || 0).toFixed(1)}%`;
+      if (repWmD) repWmD.innerText = (s.D?.weightedMark || 0).toFixed(1);
+
+      const repTacE = document.getElementById('rep-tab-tac-e');
+      const repDenomE = document.getElementById('rep-tab-denom-e');
+      const repNumE = document.getElementById('rep-tab-num-e');
+      const repPmE = document.getElementById('rep-tab-pm-e');
+      const repWmE = document.getElementById('rep-tab-wm-e');
+      if (repTacE) repTacE.innerText = s.E?.tac || 0;
+      if (repDenomE) repDenomE.innerText = s.E?.denom || 28;
+      if (repNumE) repNumE.innerText = s.E?.num || 0;
+      if (repPmE) repPmE.innerText = `${(s.E?.pm || 0).toFixed(1)}%`;
+      if (repWmE) repWmE.innerText = (s.E?.weightedMark || 0).toFixed(1);
+
+      const repTitleF = document.getElementById('rep-tab-f-title');
+      const repPmF = document.getElementById('rep-tab-pm-f');
+      const repWmF = document.getElementById('rep-tab-wm-f');
+      if (repTitleF) repTitleF.innerText = `Environmental Control (${activeEngMode} - ${activeEngMode === 'F1' ? 'General' : 'AIIR'})`;
+      if (repPmF) repPmF.innerText = `${(s.F?.pm || 0).toFixed(1)}%`;
+      if (repWmF) repWmF.innerText = (s.F?.weightedMark || 0).toFixed(1);
+
+      const repFinalScore = document.getElementById('rep-final-score-val');
+      const repRiskTitle = document.getElementById('rep-risk-title');
+      if (repFinalScore) repFinalScore.innerText = `${totalWeighted.toFixed(1)}%`;
+      if (repRiskTitle) repRiskTitle.innerText = category.toUpperCase();
+    };
+
+    window.switchView = function(view) {
+      const views = ['hub', 'form', 'report', 'dashboard', 'data'];
+      views.forEach((v) => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.classList.toggle('hidden', v !== view);
+      });
+
+      // Update Nav Buttons
+      const navKeys = ['form', 'report', 'dashboard', 'data'];
+      navKeys.forEach((key) => {
+        const btn = document.getElementById(`nav-btn-${key}`);
+        if (btn) {
+          if (key === view) {
+            btn.className = "px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all text-emerald-700 bg-emerald-50";
+          } else {
+            btn.className = "px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100";
+          }
+        }
+      });
+
+      if (view === 'report') {
+        document.getElementById('rep-name').innerText = currentAuditData.facilityName || '-';
+        document.getElementById('rep-state').innerText = currentAuditData.state || '-';
+        document.getElementById('rep-dept').innerText = currentAuditData.department || '-';
+        document.getElementById('rep-subloc').innerText = currentAuditData.sublocation || '-';
+        document.getElementById('rep-staff').innerText = currentAuditData.totalStaff || '-';
+        document.getElementById('rep-beds').innerText = currentAuditData.totalBeds || '-';
+        document.getElementById('rep-date').innerText = currentAuditData.date || '-';
+        document.getElementById('rep-pic').innerText = currentAuditData.pic || '-';
+        document.getElementById('rep-sig-lead').innerText = currentAuditData.auditors?.[0]?.name || auditorProfile.name || '-';
+      } else if (view === 'dashboard') {
+        renderDashboard();
+      } else if (view === 'data') {
+        fetchAuditsList();
+      }
+    };
+
+    window.switchSection = function(secId) {
+      activeSection = secId;
+      document.querySelectorAll('.sec-pane').forEach((pane) => {
+        pane.classList.add('hidden');
+      });
+      const activePane = document.getElementById(`section-pane-${secId}`);
+      if (activePane) activePane.classList.remove('hidden');
+
+      document.querySelectorAll('.sec-pill-btn').forEach((btn) => {
+        if (btn.getAttribute('data-sec') === secId) {
+          btn.className = "sec-pill-btn active px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center whitespace-nowrap bg-emerald-600 text-white";
+        } else {
+          btn.className = "sec-pill-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200";
+        }
+      });
+    };
+
+    window.setEngineeringMode = function(mode) {
+      activeEngMode = mode;
+      const btnF1 = document.getElementById('btn-f-mode-f1');
+      const btnF2 = document.getElementById('btn-f-mode-f2');
+      const subF1 = document.getElementById('subform-f1');
+      const subF2 = document.getElementById('subform-f2');
+
+      if (mode === 'F1') {
+        if (btnF1) btnF1.className = "flex-1 py-2 text-xs font-bold rounded-lg transition bg-white text-emerald-700 shadow-sm";
+        if (btnF2) btnF2.className = "flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900";
+        if (subF1) subF1.classList.remove('hidden');
+        if (subF2) subF2.classList.add('hidden');
+      } else {
+        if (btnF2) btnF2.className = "flex-1 py-2 text-xs font-bold rounded-lg transition bg-white text-emerald-700 shadow-sm";
+        if (btnF1) btnF1.className = "flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900";
+        if (subF2) subF2.classList.remove('hidden');
+        if (subF1) subF1.classList.add('hidden');
+      }
+      calculateSectionF();
+    };
+
+    window.renderAuditorTableRows = function(auditors) {
+      const tbody = document.getElementById('auditor-table-body');
+      if (!tbody) return;
+      if (!auditors || auditors.length === 0) {
+        auditors = [{
+          name: auditorProfile.name || 'Lead Auditor',
+          department: auditorProfile.facility || 'Infection Control',
+          role: auditorProfile.role || 'Lead Assessor'
+        }];
+        currentAuditData.auditors = auditors;
+      }
+      tbody.innerHTML = auditors.map((aud, idx) => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-2 px-3 text-center font-bold text-slate-400">${idx + 1}</td>
+          <td class="py-2 px-3">
+            <input type="text" value="${aud.name || ''}" placeholder="Nama Pegawai" class="w-full bg-transparent border-b border-slate-200 focus:outline-none focus:border-emerald-500 py-1" oninput="updateAuditorData(${idx}, 'name', this.value)">
+          </td>
+          <td class="py-2 px-3">
+            <input type="text" value="${aud.department || ''}" placeholder="Unit / Fasiliti" class="w-full bg-transparent border-b border-slate-200 focus:outline-none focus:border-emerald-500 py-1" oninput="updateAuditorData(${idx}, 'department', this.value)">
+          </td>
+          <td class="py-2 px-3">
+            <input type="text" value="${aud.role || ''}" placeholder="Jawatan" class="w-full bg-transparent border-b border-slate-200 focus:outline-none focus:border-emerald-500 py-1" oninput="updateAuditorData(${idx}, 'role', this.value)">
+          </td>
+          <td class="py-2 px-3 text-center">
+            ${idx > 0 ? `<button onclick="removeAuditorRow(${idx})" class="text-rose-500 hover:text-rose-700 font-bold p-1"><i class="fa-solid fa-trash-can"></i></button>` : `<span class="text-xs text-slate-400 font-bold">Lead</span>`}
+          </td>
+        </tr>
+      `).join('');
+    };
+
+    window.addAuditorRow = function() {
+      if (!currentAuditData.auditors) currentAuditData.auditors = [];
+      if (currentAuditData.auditors.length >= 7) {
+        showToast("Maksimum 7 penilai dibenarkan bagi setiap audit.", "warning");
+        return;
+      }
+      currentAuditData.auditors.push({ name: '', department: '', role: '' });
+      renderAuditorTableRows(currentAuditData.auditors);
+      markDirty();
+    };
+
+    window.removeAuditorRow = function(index) {
+      if (currentAuditData.auditors && currentAuditData.auditors.length > 1) {
+        currentAuditData.auditors.splice(index, 1);
+        renderAuditorTableRows(currentAuditData.auditors);
+        markDirty();
+      }
+    };
+
+    window.updateAuditorData = function(index, field, value) {
+      if (currentAuditData.auditors && currentAuditData.auditors[index]) {
+        currentAuditData.auditors[index][field] = value;
+        markDirty();
+      }
+    };
+
+    window.saveAuditToFirestore = async function() {
+      if (!db || !activeAuditId) return;
+      try {
+        const payload = {
+          ...currentAuditData,
+          lastEditedBy: currentUser ? currentUser.email : 'Local User',
+          lastEditedUid: currentUser ? currentUser.uid : '',
+          updatedAt: new Date().toISOString()
+        };
+        await setDoc(doc(db, "audits", activeAuditId), payload, { merge: true });
+        showToast("Data audit berjaya diselaras ke Firestore!", "success");
+      } catch (err) {
+        console.warn("Firestore save warning:", err);
+        showToast("Data disimpan secara lokal.", "info");
+      }
+    };
+
+    window.fetchAuditsList = async function() {
+      if (!db) return;
+      try {
+        const querySnapshot = await getDocs(collection(db, "audits"));
+        const list = [];
+        querySnapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        // Update Hub counts and table
+        const countEl = document.getElementById('hub-total-audits-count');
+        const dashCountEl = document.getElementById('dash-total-audits');
+        if (countEl) countEl.innerText = list.length;
+        if (dashCountEl) dashCountEl.innerText = list.length;
+
+        const hubTable = document.getElementById('hub-audits-table-body');
+        if (hubTable) {
+          if (list.length === 0) {
+            hubTable.innerHTML = `
+              <tr>
+                <td colspan="8" class="text-center py-6 text-slate-400">Tiada audit dijumpai. Klik "Create New Audit" untuk mula.</td>
+              </tr>
+            `;
+          } else {
+            hubTable.innerHTML = list.map((item) => {
+              const score = item.finalScore || 0;
+              const badgeColor = score >= 80 ? 'bg-emerald-100 text-emerald-800' :
+                                 score >= 60 ? 'bg-amber-100 text-amber-800' :
+                                 score > 0 ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600';
+              return `
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="py-3 px-4 font-mono font-bold text-slate-800">${item.id}</td>
+                  <td class="py-3 px-4 font-bold text-slate-900">${item.facilityName || 'Unnamed'}</td>
+                  <td class="py-3 px-4 text-slate-600">${item.sublocation || item.department || '-'}</td>
+                  <td class="py-3 px-4 text-slate-600">${item.state || '-'}</td>
+                  <td class="py-3 px-4 text-slate-500">${item.date || '-'}</td>
+                  <td class="py-3 px-4 text-center font-bold text-slate-800">${score.toFixed(1)}%</td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${badgeColor}">${item.riskCategory || 'Pending'}</span>
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <button onclick="openExistingAudit('${item.id}')" class="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold transition">
+                      <i class="fa-solid fa-folder-open mr-1"></i>Open
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+          }
+        }
+
+        renderDataGridWithList(list);
+      } catch (err) {
+        console.warn("Could not fetch audits list:", err);
+      }
+    };
+
+    window.openExistingAudit = async function(auditId) {
+      if (!auditId) return;
+      activeAuditId = auditId;
+      try {
+        if (db) {
+          const docSnap = await getDoc(doc(db, "audits", auditId));
+          if (docSnap.exists()) {
+            currentAuditData = { ...currentAuditData, ...docSnap.data() };
+          }
+        }
+        populateFormFromAuditData(currentAuditData);
+        setupAuditRealtimeListener(auditId);
+
+        document.getElementById('view-hub').classList.add('hidden');
+        document.getElementById('audit-nav-bar').classList.remove('hidden');
+        document.getElementById('header-audit-badge').classList.remove('hidden');
+        document.getElementById('header-audit-code-disp').innerText = auditId;
+        document.getElementById('btn-return-hub').classList.remove('hidden');
+
+        switchView('form');
+        showToast(`Audit ${auditId} dimuatkan.`, "info");
+      } catch (err) {
+        console.error("Open audit error:", err);
+        showToast("Gagal memuatkan audit.", "warning");
+      }
+    };
+
     window.addEventListener('DOMContentLoaded', async () => {
       loadAuditorProfileFromStorage();
       renderPPEItems();
-      document.getElementById('new-audit-date').value = new Date().toISOString().split('T')[0];
+      const dateEl = document.getElementById('new-audit-date');
+      if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
 
       try {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
 
-        // Listen for authentication changes
         onAuthStateChanged(auth, async (user) => {
           currentUser = user;
           const overlay = document.getElementById('auth-overlay');
 
           if (user) {
-            // User is signed in
-            overlay.classList.add('hidden');
+            if (overlay) overlay.classList.add('hidden');
             auditorProfile.email = user.email || '';
             if (user.displayName && !auditorProfile.name) {
               auditorProfile.name = user.displayName;
             }
 
-            // Sync user profile from Firestore users collection if available
             try {
               const uDoc = await getDoc(doc(db, "auditors", user.uid));
               if (uDoc.exists()) {
@@ -1723,13 +2243,15 @@
             showToast(`Log masuk sebagai ${user.email}`, "success");
             fetchAuditsList();
           } else {
-            // User is logged out: show modal gate
-            overlay.classList.remove('hidden');
-            document.getElementById('hub-audits-table-body').innerHTML = `
-              <tr>
-                <td colspan="8" class="text-center py-6 text-slate-400">Sila log masuk untuk mengakses audit.</td>
-              </tr>
-            `;
+            if (overlay) overlay.classList.remove('hidden');
+            const hubBody = document.getElementById('hub-audits-table-body');
+            if (hubBody) {
+              hubBody.innerHTML = `
+                <tr>
+                  <td colspan="8" class="text-center py-6 text-slate-400">Sila log masuk untuk mengakses audit.</td>
+                </tr>
+              `;
+            }
           }
         });
 
@@ -2094,556 +2616,37 @@
       document.getElementById('current-state-badge').innerText = data.state || 'State';
       document.getElementById('current-audit-code-pill').innerText = data.auditCode || activeAuditId || 'FRAT-000';
 
+      // Restore 5-year tables
+      const y = [2022, 2023, 2024, 2025, 2026];
+      y.forEach(yr => {
+        if (document.getElementById(`tb-pt-${yr}`)) document.getElementById(`tb-pt-${yr}`).value = data.historical?.tbPt?.[yr] || '';
+        if (document.getElementById(`hcw-tb-${yr}`)) document.getElementById(`hcw-tb-${yr}`).value = data.historical?.hcwTb?.[yr] || '';
+        if (document.getElementById(`c5-tb-${yr}`)) document.getElementById(`c5-tb-${yr}`).value = data.historical?.c5Tb?.[yr] || '';
+        if (document.getElementById(`c6-def-${yr}`)) document.getElementById(`c6-def-${yr}`).value = data.historical?.c6Def?.[yr] || '';
+      });
+
+      // Restore Notes / Catatan
+      ['A1','A2','A3','B1','B3','B4','C1','C2','C3','C4','C5','C6','D1','D2','D3','D4'].forEach(id => {
+        const inp = document.getElementById(`note-${id}`);
+        if (inp) inp.value = data.notes?.[id] || '';
+      });
+      PPE_CRITERIA.forEach(item => {
+        const inp = document.getElementById(`note-${item.id}`);
+        if (inp) inp.value = data.notes?.[item.id] || '';
+      });
+
+      // Restore F1/F2 Locations & Functions
+      if (document.getElementById('f1-room-loc')) document.getElementById('f1-room-loc').value = data.engineering?.f1RoomLoc || '';
+      if (document.getElementById('f1-1-2-prev')) document.getElementById('f1-1-2-prev').value = data.engineering?.f1PrevFunc || '';
+      if (document.getElementById('f1-1-2-curr')) document.getElementById('f1-1-2-curr').value = data.engineering?.f1CurrFunc || '';
+      if (document.getElementById('f2-room-loc')) document.getElementById('f2-room-loc').value = data.engineering?.f2RoomLoc || '';
+      if (document.getElementById('f2-1-2-prev')) document.getElementById('f2-1-2-prev').value = data.engineering?.f2PrevFunc || '';
+      if (document.getElementById('f2-1-2-curr')) document.getElementById('f2-1-2-curr').value = data.engineering?.f2CurrFunc || '';
+      if (document.getElementById('f2-pa-val')) document.getElementById('f2-pa-val').value = data.engineering?.f2Pa || '';
+
       renderAuditorTableRows(data.auditors || []);
       calculateAll();
     }
-
-    function renderAuditorTableRows(auditors) {
-      const tbody = document.getElementById('auditor-table-body');
-      if (!tbody) return;
-
-      if (!auditors || auditors.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="5" class="text-center py-4 text-slate-400">Tiada penilai didaftarkan. Klik "Add Auditor" untuk menambah ahli pasukan.</td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = auditors.map((a, i) => `
-        <tr class="hover:bg-slate-50 transition">
-          <td class="py-2.5 px-3 text-center font-bold text-slate-500">${i + 1}</td>
-          <td class="py-2.5 px-3">
-            <input type="text" value="${a.name || ''}" placeholder="Nama Penilai" class="w-full bg-transparent border-b border-transparent focus:border-emerald-500 font-semibold text-slate-800" onchange="updateAuditorData(${i}, 'name', this.value)">
-          </td>
-          <td class="py-2.5 px-3">
-            <input type="text" value="${a.department || ''}" placeholder="Jabatan" class="w-full bg-transparent border-b border-transparent focus:border-emerald-500 text-slate-600" onchange="updateAuditorData(${i}, 'department', this.value)">
-          </td>
-          <td class="py-2.5 px-3">
-            <input type="text" value="${a.role || ''}" placeholder="Jawatan" class="w-full bg-transparent border-b border-transparent focus:border-emerald-500 text-slate-600" onchange="updateAuditorData(${i}, 'role', this.value)">
-          </td>
-          <td class="py-2.5 px-3 text-center">
-            <button onclick="removeAuditorRow(${i})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    window.addAuditorRow = function() {
-      if (!currentAuditData.auditors) currentAuditData.auditors = [];
-      if (currentAuditData.auditors.length >= 7) {
-        showToast("Maksimum 7 penilai dibenarkan bagi setiap audit.", "warning");
-        return;
-      }
-      currentAuditData.auditors.push({ name: "", department: "", role: "" });
-      renderAuditorTableRows(currentAuditData.auditors);
-      saveAuditToFirestore();
-    };
-
-    window.removeAuditorRow = function(index) {
-      if (!currentAuditData.auditors) return;
-      currentAuditData.auditors.splice(index, 1);
-      renderAuditorTableRows(currentAuditData.auditors);
-      saveAuditToFirestore();
-    };
-
-    window.updateAuditorData = function(index, field, value) {
-      if (currentAuditData.auditors && currentAuditData.auditors[index]) {
-        currentAuditData.auditors[index][field] = value;
-        saveAuditToFirestore();
-      }
-    };
-
-    window.fetchAuditsList = async function() {
-      const tbody = document.getElementById('hub-audits-table-body');
-      if (!tbody) return;
-
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="8" class="text-center py-8 text-slate-400">
-            <i class="fa-solid fa-spinner fa-spin text-xl mb-2 text-emerald-600 block"></i>
-            Menyelaras audit dari Firestore...
-          </td>
-        </tr>
-      `;
-
-      if (!db || !currentUser) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" class="text-center py-6 text-slate-400">Log masuk untuk menyemak audit yang disimpan.</td>
-          </tr>
-        `;
-        return;
-      }
-
-      try {
-        const querySnap = await getDocs(collection(db, "audits"));
-        const list = [];
-        querySnap.forEach(d => {
-          list.push({ id: d.id, ...d.data() });
-        });
-
-        document.getElementById('hub-total-audits-count').innerText = list.length;
-        document.getElementById('dash-total-audits').innerText = list.length;
-
-        if (list.length === 0) {
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="8" class="text-center py-8 text-slate-400">
-                <i class="fa-solid fa-folder-open text-2xl text-slate-300 block mb-2"></i>
-                Tiada rekod audit lagi. Klik <b>"Create New Audit"</b> untuk memulakan penilaian fasiliti pertama anda.
-              </td>
-            </tr>
-          `;
-          renderDataGridWithList([]);
-          return;
-        }
-
-        tbody.innerHTML = list.map(item => {
-          let badgeColor = item.finalScore >= 80 ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
-                           item.finalScore >= 60 ? 'bg-amber-100 text-amber-800 border-amber-300' :
-                           item.finalScore > 0 ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-slate-100 text-slate-600 border-slate-300';
-
-          return `
-            <tr class="hover:bg-slate-50 transition">
-              <td class="py-3 px-4 font-mono font-bold text-slate-800">${item.id}</td>
-              <td class="py-3 px-4 font-bold text-slate-900">${item.facilityName || 'Unnamed'}</td>
-              <td class="py-3 px-4 text-slate-600">${item.department || '-'} / ${item.sublocation || '-'}</td>
-              <td class="py-3 px-4 text-slate-600">${item.state || '-'}</td>
-              <td class="py-3 px-4 text-slate-500">${item.date || '-'}</td>
-              <td class="py-3 px-4 text-center font-black text-slate-800">${(item.finalScore || 0).toFixed(1)}%</td>
-              <td class="py-3 px-4 text-center">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${badgeColor}">${item.riskCategory || 'Pending'}</span>
-              </td>
-              <td class="py-3 px-4 text-right">
-                <button onclick="openExistingAudit('${item.id}')" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition flex items-center inline-flex">
-                  <i class="fa-solid fa-folder-open mr-1"></i>Buka
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
-        renderDataGridWithList(list);
-
-        // Update dashboard KPI counts
-        const lowCount = list.filter(a => a.finalScore >= 80).length;
-        const highCount = list.filter(a => a.finalScore > 0 && a.finalScore < 60).length;
-        const avgScore = list.length > 0 ? (list.reduce((acc, a) => acc + (a.finalScore || 0), 0) / list.length) : 0;
-
-        document.getElementById('dash-kpi-low').innerText = lowCount;
-        document.getElementById('dash-kpi-high').innerText = highCount;
-        document.getElementById('dash-kpi-avg').innerText = `${avgScore.toFixed(1)}%`;
-
-      } catch (err) {
-        console.error("Fetch audits error:", err);
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" class="text-center py-6 text-rose-500 font-semibold">Gagal memuatkan rekod dari pelayan: ${err.message}</td>
-          </tr>
-        `;
-      }
-    };
-
-    window.openExistingAudit = async function(auditId) {
-      if (!db) return;
-      showToast(`Membuka audit ${auditId}...`, "info");
-
-      try {
-        const snap = await getDoc(doc(db, "audits", auditId));
-        if (!snap.exists()) {
-          showToast(`Audit ${auditId} tidak dijumpai dalam pangkalan data.`, "warning");
-          return;
-        }
-
-        activeAuditId = auditId;
-        currentAuditData = { auditCode: auditId, ...snap.data() };
-
-        setupAuditRealtimeListener(auditId);
-        populateFormFromAuditData(currentAuditData);
-
-        document.getElementById('view-hub').classList.add('hidden');
-        document.getElementById('audit-nav-bar').classList.remove('hidden');
-        document.getElementById('header-audit-badge').classList.remove('hidden');
-        document.getElementById('header-audit-code-disp').innerText = auditId;
-        document.getElementById('btn-return-hub').classList.remove('hidden');
-
-        switchView('form');
-        showToast(`Audit ${auditId} dimuatkan secara langsung!`, "success");
-      } catch (err) {
-        showToast("Ralat memuatkan audit: " + err.message, "warning");
-      }
-    };
-
-    function renderPPEItems() {
-      const container = document.getElementById('ppe-items-container');
-      if (!container) return;
-
-      container.innerHTML = PPE_CRITERIA.map(item => `
-        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-          <div class="flex items-start justify-between">
-            <div>
-              <span class="text-xs font-extrabold text-emerald-700">CRITERIA ${item.id}</span>
-              <h4 class="text-sm font-bold text-slate-900 mt-0.5">${item.title}</h4>
-              <p class="text-xs text-slate-500 mt-0.5">${item.desc}</p>
-            </div>
-            <label class="flex items-center space-x-1.5 text-xs font-bold text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer hover:border-slate-400">
-              <input type="radio" name="${item.id}" value="NA" class="text-slate-600 focus:ring-slate-400" onchange="calculateSectionE()">
-              <span>N/A (Tidak Berkaitan)</span>
-            </label>
-          </div>
-          <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-            <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
-              <input type="radio" name="${item.id}" value="4" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
-              <div class="text-xs"><span class="font-bold text-slate-900">4 Marks:</span> Supplied + Used / Lengkap</div>
-            </label>
-            <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
-              <input type="radio" name="${item.id}" value="3" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
-              <div class="text-xs"><span class="font-bold text-slate-900">3 Marks:</span> Supplied +/- Used</div>
-            </label>
-            <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
-              <input type="radio" name="${item.id}" value="2" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
-              <div class="text-xs"><span class="font-bold text-slate-900">2 Marks:</span> Not used / Kurang teratur</div>
-            </label>
-            <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
-              <input type="radio" name="${item.id}" value="1" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
-              <div class="text-xs"><span class="font-bold text-slate-900">1 Mark:</span> Not supplied / Tiada latihan</div>
-            </label>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function saveAuditToFirestore() {
-      if (!db || !currentUser || !activeAuditId) return;
-      try {
-        const docRef = doc(db, "audits", activeAuditId);
-        const payload = {
-          ...currentAuditData,
-          lastEditedBy: currentUser.email || auditorProfile.name || 'Auditor',
-          lastEditedUid: currentUser.uid,
-          updatedAt: new Date().toISOString()
-        };
-        await setDoc(docRef, payload, { merge: true });
-        showToast("Synced with cloud database!", "success");
-      } catch (e) {
-        console.error("Save error:", e);
-      }
-    }
-
-    window.calculateSectionA = function() {
-      const r1 = document.querySelector('input[name="A1"]:checked');
-      const r2 = document.querySelector('input[name="A2"]:checked');
-      const r3 = document.querySelector('input[name="A3"]:checked');
-
-      if (!r1 && !r2 && !r3) {
-        currentAuditData.scores.A = { num: 0, denom: 12, pm: 0, weight: 20, weightedMark: 0 };
-        document.getElementById('score-num-A').innerText = 0;
-        document.getElementById('score-pct-A').innerText = "0.0";
-        calculateTotalRisk();
-        return;
-      }
-
-      const num = parseInt(r1?.value || 0) + parseInt(r2?.value || 0) + parseInt(r3?.value || 0);
-      const pm = (num / 12) * 100;
-      const wm = (pm * 0.20);
-
-      currentAuditData.scores.A = { num, denom: 12, pm, weight: 20, weightedMark: wm };
-      document.getElementById('score-num-A').innerText = num;
-      document.getElementById('score-pct-A').innerText = pm.toFixed(1);
-      calculateTotalRisk();
-    };
-
-    window.calculateSectionB = function() {
-      const r1 = document.querySelector('input[name="B1"]:checked');
-      const r3 = document.querySelector('input[name="B3"]:checked');
-      const r4 = document.querySelector('input[name="B4"]:checked');
-
-      if (!r1 && !r3 && !r4) {
-        currentAuditData.scores.B = { num: 0, denom: 12, pm: 0, weight: 15, weightedMark: 0 };
-        document.getElementById('score-num-B').innerText = 0;
-        document.getElementById('score-pct-B').innerText = "0.0";
-        calculateTotalRisk();
-        return;
-      }
-
-      const num = parseInt(r1?.value || 0) + parseInt(r3?.value || 0) + parseInt(r4?.value || 0);
-      const pm = (num / 12) * 100;
-      const wm = (pm * 0.15);
-
-      currentAuditData.scores.B = { num, denom: 12, pm, weight: 15, weightedMark: wm };
-      document.getElementById('score-num-B').innerText = num;
-      document.getElementById('score-pct-B').innerText = pm.toFixed(1);
-      calculateTotalRisk();
-    };
-
-    window.calculateSectionC = function() {
-      const radios = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6'].map(id => document.querySelector(`input[name="${id}"]:checked`));
-      const hasAny = radios.some(r => r !== null);
-
-      if (!hasAny) {
-        currentAuditData.scores.C = { num: 0, denom: 24, pm: 0, weight: 10, weightedMark: 0 };
-        document.getElementById('score-num-C').innerText = 0;
-        document.getElementById('score-pct-C').innerText = "0.0";
-        calculateTotalRisk();
-        return;
-      }
-
-      const num = radios.reduce((sum, r) => sum + parseInt(r?.value || 0), 0);
-      const pm = (num / 24) * 100;
-      const wm = (pm * 0.10);
-
-      currentAuditData.scores.C = { num, denom: 24, pm, weight: 10, weightedMark: wm };
-      document.getElementById('score-num-C').innerText = num;
-      document.getElementById('score-pct-C').innerText = pm.toFixed(1);
-      calculateTotalRisk();
-    };
-
-    window.calculateSectionD = function() {
-      const radios = ['D1', 'D2', 'D3', 'D4'].map(id => document.querySelector(`input[name="${id}"]:checked`));
-      const hasAny = radios.some(r => r !== null);
-
-      if (!hasAny) {
-        currentAuditData.scores.D = { num: 0, denom: 16, pm: 0, weight: 10, weightedMark: 0 };
-        document.getElementById('score-num-D').innerText = 0;
-        document.getElementById('score-pct-D').innerText = "0.0";
-        calculateTotalRisk();
-        return;
-      }
-
-      const num = radios.reduce((sum, r) => sum + parseInt(r?.value || 0), 0);
-      const pm = (num / 16) * 100;
-      const wm = (pm * 0.10);
-
-      currentAuditData.scores.D = { num, denom: 16, pm, weight: 10, weightedMark: wm };
-      document.getElementById('score-num-D').innerText = num;
-      document.getElementById('score-pct-D').innerText = pm.toFixed(1);
-      calculateTotalRisk();
-    };
-
-    window.calculateSectionE = function() {
-      let num = 0;
-      let validCount = 0;
-
-      PPE_CRITERIA.forEach(item => {
-        const val = document.querySelector(`input[name="${item.id}"]:checked`)?.value;
-        if (val && val !== 'NA') {
-          num += parseInt(val);
-          validCount++;
-        }
-      });
-
-      if (validCount === 0) {
-        currentAuditData.scores.E = { num: 0, denom: 28, tac: 0, pm: 0, weight: 15, weightedMark: 0 };
-        document.getElementById('score-num-E').innerText = 0;
-        document.getElementById('score-denom-E').innerText = 28;
-        document.getElementById('score-pct-E').innerText = "0.0";
-        calculateTotalRisk();
-        return;
-      }
-
-      const denom = (validCount * 4);
-      const pm = (num / denom) * 100;
-      const wm = (pm * 0.15);
-
-      currentAuditData.scores.E = { num, denom, tac: validCount, pm, weight: 15, weightedMark: wm };
-      document.getElementById('score-num-E').innerText = num;
-      document.getElementById('score-denom-E').innerText = denom;
-      document.getElementById('score-pct-E').innerText = pm.toFixed(1);
-      calculateTotalRisk();
-    };
-
-    window.calculateSectionF = function() {
-      let pm = 0;
-      if (activeEngMode === 'F1') {
-        const g1 = parseInt(document.getElementById('f1-1-1')?.value || 0);
-        const g3 = parseInt(document.getElementById('f1-1-3')?.value || 0);
-        const ach = parseInt(document.getElementById('f1-ach')?.value || 0);
-        const flow = parseInt(document.getElementById('f1-flow')?.value || 0);
-        const cross = parseInt(document.getElementById('f1-cross')?.value || 0);
-        const uv = parseInt(document.getElementById('f1-tech-uv')?.value || 0);
-
-        const genPct = ((g1 + g3) / 2) * 5;
-        const ventPct = ((ach + cross + flow) / 9) * 95;
-        const techBonus = uv ? 5 : 0;
-        pm = Math.min(100, genPct + ventPct + techBonus);
-      } else {
-        const anteroom = parseInt(document.getElementById('f2-anteroom')?.value || 0);
-        const ceiling = parseInt(document.getElementById('f2-ceiling')?.value || 0);
-        const neg = parseInt(document.getElementById('f2-neg-status')?.value || 0);
-        const ach = parseInt(document.getElementById('f2-ach')?.value || 0);
-        const monitor = parseInt(document.getElementById('f2-monitor')?.value || 0);
-        const flow = parseInt(document.getElementById('f2-flow')?.value || 0);
-        const cross = parseInt(document.getElementById('f2-cross')?.value || 0);
-        const roof = parseInt(document.getElementById('f2-roof')?.value || 0);
-        const hepa = parseInt(document.getElementById('f2-hepa')?.value || 0);
-
-        const genPct = ((anteroom + ceiling + neg) / 3) * 10;
-        const ventPct = ((ach + monitor + flow + (cross / 4)) / 4) * 70;
-        const exPct = ((roof + hepa) / 2) * 20;
-        pm = Math.min(100, genPct + ventPct + exPct);
-      }
-
-      const wm = (pm * 0.30);
-      currentAuditData.scores.F = { mode: activeEngMode, pm, weight: 30, weightedMark: wm };
-      document.getElementById('score-pct-F').innerText = pm.toFixed(1);
-      calculateTotalRisk();
-    };
-
-    window.calculateTotalRisk = function() {
-      const s = currentAuditData.scores;
-      const totalWeighted = (s.A?.weightedMark || 0) + (s.B?.weightedMark || 0) + (s.C?.weightedMark || 0) + (s.D?.weightedMark || 0) + (s.E?.weightedMark || 0) + (s.F?.weightedMark || 0);
-
-      currentAuditData.finalScore = totalWeighted;
-
-      let risk = "Pending Assessment";
-      let badgeClass = "bg-slate-200 text-slate-700";
-
-      if (totalWeighted > 0) {
-        if (totalWeighted >= 80) {
-          risk = "Low Risk / Rendah";
-          badgeClass = "bg-emerald-100 text-emerald-800 border border-emerald-300";
-        } else if (totalWeighted >= 60) {
-          risk = "Medium Risk / Sederhana";
-          badgeClass = "bg-amber-100 text-amber-800 border border-amber-300";
-        } else if (totalWeighted >= 40) {
-          risk = "High Risk / Tinggi";
-          badgeClass = "bg-orange-100 text-orange-800 border border-orange-300";
-        } else {
-          risk = "Critical Risk / Kritikal";
-          badgeClass = "bg-rose-100 text-rose-800 border border-rose-300";
-        }
-      }
-
-      currentAuditData.riskCategory = risk;
-
-      document.getElementById('disp-overall-score').innerText = totalWeighted.toFixed(1);
-      const badge = document.getElementById('disp-risk-badge');
-      badge.className = `px-3.5 py-2 rounded-xl text-center font-extrabold text-xs shadow-sm uppercase tracking-wide ${badgeClass}`;
-      badge.innerText = risk;
-
-      updateReportViewValues();
-    };
-
-    function calculateAll() {
-      calculateSectionA();
-      calculateSectionB();
-      calculateSectionC();
-      calculateSectionD();
-      calculateSectionE();
-      calculateSectionF();
-      calculateTotalRisk();
-    }
-
-    function updateReportViewValues() {
-      document.getElementById('rep-name').innerText = currentAuditData.facilityName || '-';
-      document.getElementById('rep-state').innerText = currentAuditData.state || '-';
-      document.getElementById('rep-dept').innerText = currentAuditData.department || '-';
-      document.getElementById('rep-subloc').innerText = currentAuditData.sublocation || '-';
-      document.getElementById('rep-staff').innerText = currentAuditData.totalStaff || '-';
-      document.getElementById('rep-beds').innerText = currentAuditData.totalBeds || '-';
-      document.getElementById('rep-date').innerText = currentAuditData.date || '-';
-      document.getElementById('rep-pic').innerText = currentAuditData.pic || '-';
-
-      const s = currentAuditData.scores;
-      document.getElementById('rep-tab-num-a').innerText = s.A?.num || 0;
-      document.getElementById('rep-tab-pm-a').innerText = `${(s.A?.pm || 0).toFixed(1)}%`;
-      document.getElementById('rep-tab-wm-a').innerText = (s.A?.weightedMark || 0).toFixed(1);
-
-      document.getElementById('rep-tab-num-b').innerText = s.B?.num || 0;
-      document.getElementById('rep-tab-pm-b').innerText = `${(s.B?.pm || 0).toFixed(1)}%`;
-      document.getElementById('rep-tab-wm-b').innerText = (s.B?.weightedMark || 0).toFixed(1);
-
-      document.getElementById('rep-tab-num-c').innerText = s.C?.num || 0;
-      document.getElementById('rep-tab-pm-c').innerText = `${(s.C?.pm || 0).toFixed(1)}%`;
-      document.getElementById('rep-tab-wm-c').innerText = (s.C?.weightedMark || 0).toFixed(1);
-
-      document.getElementById('rep-tab-num-d').innerText = s.D?.num || 0;
-      document.getElementById('rep-tab-pm-d').innerText = `${(s.D?.pm || 0).toFixed(1)}%`;
-      document.getElementById('rep-tab-wm-d').innerText = (s.D?.weightedMark || 0).toFixed(1);
-
-      document.getElementById('rep-tab-tac-e').innerText = s.E?.tac || 0;
-      document.getElementById('rep-tab-denom-e').innerText = s.E?.denom || 28;
-      document.getElementById('rep-tab-num-e').innerText = s.E?.num || 0;
-      document.getElementById('rep-tab-pm-e').innerText = `${(s.E?.pm || 0).toFixed(1)}%`;
-      document.getElementById('rep-tab-wm-e').innerText = (s.E?.weightedMark || 0).toFixed(1);
-
-      document.getElementById('rep-tab-f-title').innerText = `Environmental Control (${activeEngMode})`;
-      document.getElementById('rep-tab-pm-f').innerText = `${(s.F?.pm || 0).toFixed(1)}%`;
-      document.getElementById('rep-tab-wm-f').innerText = (s.F?.weightedMark || 0).toFixed(1);
-
-      document.getElementById('rep-final-score-val').innerText = `${currentAuditData.finalScore.toFixed(1)}%`;
-      document.getElementById('rep-risk-title').innerText = currentAuditData.riskCategory;
-
-      const lead = currentAuditData.auditors?.[0]?.name || auditorProfile.name || 'Lead Auditor';
-      document.getElementById('rep-sig-lead').innerText = lead;
-    }
-
-    window.switchView = function(view) {
-      document.getElementById('view-form').classList.add('hidden');
-      document.getElementById('view-report').classList.add('hidden');
-      document.getElementById('view-dashboard').classList.add('hidden');
-      document.getElementById('view-data').classList.add('hidden');
-
-      ['form', 'report', 'dashboard', 'data'].forEach(v => {
-        const btn = document.getElementById(`nav-btn-${v}`);
-        if (btn) {
-          btn.classList.remove('bg-emerald-50', 'text-emerald-700');
-          btn.classList.add('text-slate-600');
-        }
-      });
-
-      document.getElementById(`view-${view}`).classList.remove('hidden');
-      const activeBtn = document.getElementById(`nav-btn-${view}`);
-      if (activeBtn) {
-        activeBtn.classList.remove('text-slate-600');
-        activeBtn.classList.add('bg-emerald-50', 'text-emerald-700');
-      }
-
-      if (view === 'report') updateReportViewValues();
-      if (view === 'dashboard') renderDashboard();
-      if (view === 'data') fetchAuditsList();
-    };
-
-    window.switchSection = function(sec) {
-      activeSection = sec;
-      document.querySelectorAll('.sec-pane').forEach(el => el.classList.add('hidden'));
-      document.getElementById(`section-pane-${sec}`).classList.remove('hidden');
-
-      document.querySelectorAll('.sec-pill-btn').forEach(btn => {
-        btn.classList.remove('bg-emerald-600', 'text-white');
-        btn.classList.add('bg-slate-100', 'text-slate-600');
-      });
-
-      const currentBtn = document.querySelector(`.sec-pill-btn[data-sec="${sec}"]`);
-      if (currentBtn) {
-        currentBtn.classList.remove('bg-slate-100', 'text-slate-600');
-        currentBtn.classList.add('bg-emerald-600', 'text-white');
-      }
-    };
-
-    window.setEngineeringMode = function(mode) {
-      activeEngMode = mode;
-      const btnF1 = document.getElementById('btn-f-mode-f1');
-      const btnF2 = document.getElementById('btn-f-mode-f2');
-      const subF1 = document.getElementById('subform-f1');
-      const subF2 = document.getElementById('subform-f2');
-
-      if (mode === 'F1') {
-        btnF1.className = "flex-1 py-2 text-xs font-bold rounded-lg transition bg-white text-emerald-700 shadow-sm";
-        btnF2.className = "flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900";
-        subF1.classList.remove('hidden');
-        subF2.classList.add('hidden');
-      } else {
-        btnF2.className = "flex-1 py-2 text-xs font-bold rounded-lg transition bg-white text-emerald-700 shadow-sm";
-        btnF1.className = "flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900";
-        subF2.classList.remove('hidden');
-        subF1.classList.add('hidden');
-      }
-      calculateSectionF();
-      markDirty();
-    };
 
     window.markDirty = function() {
       currentAuditData.facilityName = document.getElementById('inp-facility-name').value;
@@ -2655,6 +2658,35 @@
       currentAuditData.totalStaff = parseInt(document.getElementById('inp-total-staff').value || 0);
       currentAuditData.totalBeds = parseInt(document.getElementById('inp-total-beds').value || 0);
       currentAuditData.pic = document.getElementById('inp-pic-info').value;
+
+      // Collect 5-year stats
+      if (!currentAuditData.historical) currentAuditData.historical = { tbPt: {}, hcwTb: {}, c5Tb: {}, c6Def: {} };
+      [2022, 2023, 2024, 2025, 2026].forEach(yr => {
+        currentAuditData.historical.tbPt[yr] = document.getElementById(`tb-pt-${yr}`)?.value || '';
+        currentAuditData.historical.hcwTb[yr] = document.getElementById(`hcw-tb-${yr}`)?.value || '';
+        currentAuditData.historical.c5Tb[yr] = document.getElementById(`c5-tb-${yr}`)?.value || '';
+        currentAuditData.historical.c6Def[yr] = document.getElementById(`c6-def-${yr}`)?.value || '';
+      });
+
+      // Collect Notes
+      if (!currentAuditData.notes) currentAuditData.notes = {};
+      ['A1','A2','A3','B1','B3','B4','C1','C2','C3','C4','C5','C6','D1','D2','D3','D4'].forEach(id => {
+        currentAuditData.notes[id] = document.getElementById(`note-${id}`)?.value || '';
+      });
+      PPE_CRITERIA.forEach(item => {
+        currentAuditData.notes[item.id] = document.getElementById(`note-${item.id}`)?.value || '';
+      });
+
+      // Collect Engineering details
+      currentAuditData.engineering = {
+        f1RoomLoc: document.getElementById('f1-room-loc')?.value || '',
+        f1PrevFunc: document.getElementById('f1-1-2-prev')?.value || '',
+        f1CurrFunc: document.getElementById('f1-1-2-curr')?.value || '',
+        f2RoomLoc: document.getElementById('f2-room-loc')?.value || '',
+        f2PrevFunc: document.getElementById('f2-1-2-prev')?.value || '',
+        f2CurrFunc: document.getElementById('f2-1-2-curr')?.value || '',
+        f2Pa: document.getElementById('f2-pa-val')?.value || ''
+      };
 
       document.getElementById('disp-facility-name').innerText = currentAuditData.facilityName || 'Facility';
       document.getElementById('disp-sublocation').innerText = currentAuditData.sublocation || 'Location unassigned';
