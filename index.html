@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TB FRAT 2026 - Facility TB Risk Assessment Tool</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js for Dashboard Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            kkm: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        font-size: 11pt !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
+        box-shadow: none !important;
+      }
+      .border {
+        border-color: #cbd5e1 !important;
+      }
+    }
+    .print-only {
+      display: none;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo and System Title -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="showHubView()">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+            <i class="fa-solid fa-lungs-virus text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-extrabold text-slate-900 tracking-tight text-lg">TB FRAT</span>
+              <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-full border border-emerald-300">2026</span>
+            </div>
+            <p class="text-xs text-slate-500 hidden sm:block">Ministry of Health Malaysia • Appendix 3 Assessment Tool</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs (Only visible when an audit is active) -->
+        <nav id="audit-nav-bar" class="hidden sm:flex items-center space-x-1 sm:space-x-2">
+          <button onclick="switchView('form')" id="nav-btn-form" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all text-emerald-700 bg-emerald-50">
+            <i class="fa-solid fa-clipboard-check mr-1.5"></i>Auditor Form
+          </button>
+          <button onclick="switchView('report')" id="nav-btn-report" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+            <i class="fa-solid fa-file-invoice mr-1.5"></i>Official Report
+          </button>
+          <button onclick="switchView('dashboard')" id="nav-btn-dashboard" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+            <i class="fa-solid fa-chart-pie mr-1.5"></i>Dashboard
+          </button>
+          <button onclick="switchView('data')" id="nav-btn-data" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+            <i class="fa-solid fa-database mr-1.5"></i>All Audits
+          </button>
+        </nav>
+
+        <!-- Profile & Audit Badge / Controls -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          <!-- Active Audit ID Badge (when loaded) -->
+          <div id="header-audit-badge" class="hidden items-center bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded-xl font-bold">
+            <i class="fa-solid fa-folder-tree mr-1.5 text-emerald-400"></i>
+            <span id="header-audit-code-disp">No Audit</span>
+          </div>
+
+          <!-- Auditor Profile Button -->
+          <button onclick="openProfileModal()" class="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition">
+            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold" id="header-avatar-initial">
+              A
+            </div>
+            <span id="header-auditor-name" class="text-xs font-bold text-slate-700 hidden md:inline">Auditor Profile</span>
+          </button>
+
+          <!-- Back to Hub Button -->
+          <button onclick="showHubView()" id="btn-return-hub" class="hidden px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="Return to Audit Gateway">
+            <i class="fa-solid fa-house"></i>
+          </button>
+
+          <!-- Sign Out Button -->
+          <button onclick="handleSignOut()" id="btn-header-signout" class="p-2 text-xs font-bold rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Sign Out">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ==================== VIEW 0: AUDIT GATEWAY & HUB ==================== -->
+    <div id="view-hub" class="space-y-8">
+      
+      <!-- Welcome Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+        <div class="relative z-10 max-w-2xl">
+          <div class="inline-flex items-center space-x-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold mb-3">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>MOH Malaysia National TB Infection Control 2026</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-black tracking-tight">Facility TB Risk Assessment Tool (TB FRAT)</h1>
+          <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+            Standardized digital audit system for Ministry of Health hospitals, health clinics, and specialized respiratory centers. Collaborate across 5 to 7 auditors in real time with zero race conditions.
+          </p>
+
+          <div class="mt-6 flex flex-wrap items-center gap-3">
+            <button onclick="openCreateAuditModal()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center">
+              <i class="fa-solid fa-plus-circle mr-2 text-base"></i>Create New Audit
+            </button>
+            <button onclick="openJoinAuditModal()" class="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl border border-white/20 backdrop-blur transition flex items-center">
+              <i class="fa-solid fa-right-to-bracket mr-2 text-base"></i>Join Audit with Code
+            </button>
+          </div>
+        </div>
+
+        <div class="hidden lg:block absolute -right-10 -bottom-10 opacity-10 text-white text-[280px] pointer-events-none">
+          <i class="fa-solid fa-lungs"></i>
+        </div>
+      </div>
+
+      <!-- Auditor Identity Card & State Summary -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Auditor Card -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] uppercase tracking-wider font-extrabold text-slate-400">Current Auditor</span>
+              <button onclick="openProfileModal()" class="text-xs font-bold text-emerald-600 hover:underline">Edit</button>
+            </div>
+            <div class="mt-3 flex items-center space-x-3">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-lg" id="hub-avatar-badge">
+                A
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-slate-900" id="hub-auditor-name">Auditor Not Registered</h3>
+                <p class="text-xs text-slate-500" id="hub-auditor-designation">Tap edit to set your particulars</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>State: <b class="text-slate-800" id="hub-auditor-state">Selangor</b></span>
+            <span>ID: <b class="text-slate-800" id="hub-auditor-id">Unassigned</b></span>
+          </div>
+        </div>
+
+        <!-- Quick Stats: Audits conducted -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] uppercase tracking-wider font-extrabold text-slate-400">Audits in System</span>
+            <div class="flex items-baseline space-x-2 mt-2">
+              <span class="text-3xl font-black text-slate-900" id="hub-total-audits-count">0</span>
+              <span class="text-xs font-bold text-slate-500">facilities audited</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 mt-2">Data synced with cloud storage in real time.</p>
+        </div>
+
+        <!-- Guidance Card -->
+        <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 flex flex-col justify-between text-xs text-emerald-950">
+          <div>
+            <div class="flex items-center space-x-1.5 font-extrabold text-emerald-900 mb-1">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>Multi-Auditor Coordination</span>
+            </div>
+            <p class="text-emerald-800 mt-1 leading-relaxed">
+              When 5 to 7 auditors inspect a facility together, one lead auditor clicks <b>"Create New Audit"</b> and shares the generated Audit ID. All other team members click <b>"Join Audit"</b> to enter their assigned sections in parallel.
+            </p>
+          </div>
+          <div class="mt-3 font-semibold text-emerald-700">Appendix 3 • MOH 2026 Guidelines</div>
+        </div>
+      </div>
+
+      <!-- Recent Audits List in User's State -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Recorded Audits</h3>
+            <p class="text-xs text-slate-500">Select an existing audit to continue inspection or view the official report.</p>
+          </div>
+          <button onclick="fetchAuditsList()" class="self-start sm:self-auto px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center">
+            <i class="fa-solid fa-rotate-right mr-1.5"></i>Refresh List
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                <th class="py-3 px-4">Audit ID</th>
+                <th class="py-3 px-4">Facility Name</th>
+                <th class="py-3 px-4">Department / Sublocation</th>
+                <th class="py-3 px-4">State</th>
+                <th class="py-3 px-4">Date</th>
+                <th class="py-3 px-4 text-center">Score</th>
+                <th class="py-3 px-4 text-center">Risk Tier</th>
+                <th class="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="hub-audits-table-body" class="divide-y divide-slate-100">
+              <tr>
+                <td colspan="8" class="text-center py-8 text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin text-xl mb-2 text-emerald-600 block"></i>
+                  Loading audits...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== VIEW 1: AUDITOR FORM ==================== -->
+    <div id="view-form" class="hidden space-y-6">
+      
+      <!-- Facility Summary & Quick Scorecard -->
+      <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs uppercase tracking-wider font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">Facility Profile</span>
+              <span id="current-state-badge" class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">-</span>
+              <span id="current-audit-code-pill" class="text-xs font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-300">FRAT-000</span>
+            </div>
+            <h1 id="disp-facility-name" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">Hospital / Clinic Name</h1>
+            <p id="disp-sublocation" class="text-xs sm:text-sm text-slate-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i><span id="disp-subloc-text">Location unassigned</span></p>
+          </div>
+
+          <!-- Live Scorecard Indicator -->
+          <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <div class="text-right">
+              <p class="text-xs font-medium text-slate-500">Weighted Risk Mark</p>
+              <div class="flex items-baseline justify-end space-x-1">
+                <span id="disp-overall-score" class="text-3xl font-black text-slate-900">0.0</span>
+                <span class="text-sm font-bold text-slate-500">%</span>
+              </div>
+            </div>
+            <div id="disp-risk-badge" class="px-3.5 py-2 rounded-xl text-center font-bold text-xs shadow-sm bg-slate-200 text-slate-700 uppercase tracking-wide">
+              Pending Assessment
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Navigation Pill Tabs -->
+        <div class="mt-6 pt-5 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-2">
+          <button onclick="switchSection('profile')" class="sec-pill-btn active px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center whitespace-nowrap bg-emerald-600 text-white" data-sec="profile">
+            <i class="fa-solid fa-hospital mr-1.5"></i>Profile & Team
+          </button>
+          <button onclick="switchSection('A')" class="sec-pill-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200" data-sec="A">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] mr-1.5 font-bold">A</span> Workplace Mgmt (20%)
+          </button>
+          <button onclick="switchSection('B')" class="sec-pill-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200" data-sec="B">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] mr-1.5 font-bold">B</span> TB Burden (15%)
+          </button>
+          <button onclick="switchSection('C')" class="sec-pill-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200" data-sec="C">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] mr-1.5 font-bold">C</span> Screening (10%)
+          </button>
+          <button onclick="switchSection('D')" class="sec-pill-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200" data-sec="D">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] mr-1.5 font-bold">D</span> Notification (10%)
+          </button>
+          <button onclick="switchSection('E')" class="sec-pill-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200" data-sec="E">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] mr-1.5 font-bold">E</span> PPE Control (15%)
+          </button>
+          <button onclick="switchSection('F')" class="sec-pill-btn px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200" data-sec="F">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] mr-1.5 font-bold">F</span> Engineering (30%)
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION: Profile & Auditors -->
+      <div id="section-pane-profile" class="sec-pane space-y-6">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+            <div>
+              <h2 class="text-lg font-bold text-slate-900">Facility Profile / Profil Fasiliti</h2>
+              <p class="text-xs text-slate-500">General administrative particulars of the audited hospital / clinic.</p>
+            </div>
+            <button onclick="saveCurrentSection()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
+              <i class="fa-solid fa-floppy-disk mr-1.5"></i>Save Profile
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">State / Negeri</label>
+              <select id="inp-state" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" onchange="markDirty()">
+                <option value="Selangor">Selangor</option>
+                <option value="WPKL & Putrajaya">WPKL & Putrajaya</option>
+                <option value="Johor">Johor</option>
+                <option value="Perak">Perak</option>
+                <option value="Penang">Pulau Pinang</option>
+                <option value="Kedah">Kedah</option>
+                <option value="Pahang">Pahang</option>
+                <option value="Terengganu">Terengganu</option>
+                <option value="Kelantan">Kelantan</option>
+                <option value="Negeri Sembilan">Negeri Sembilan</option>
+                <option value="Melaka">Melaka</option>
+                <option value="Perlis">Perlis</option>
+                <option value="Sabah">Sabah</option>
+                <option value="Sarawak">Sarawak</option>
+                <option value="WP Labuan">WP Labuan</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Name of Facility / Nama Fasiliti</label>
+              <input type="text" id="inp-facility-name" placeholder="Contoh: Hospital Shah Alam" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Facility Address / Alamat</label>
+              <input type="text" id="inp-facility-address" placeholder="Alamat penuh fasiliti" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Department/Unit / Jabatan</label>
+              <input type="text" id="inp-department" placeholder="Contoh: Jabatan Perubatan & TB Clinic" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Sublocation / Sublokasi</label>
+              <input type="text" id="inp-sublocation" placeholder="Contoh: Bilik Pengasingan AIIR 2" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Date of Assessment / Tarikh</label>
+              <input type="date" id="inp-assessment-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Total Staffs / Bilangan Kakitangan</label>
+              <input type="number" id="inp-total-staff" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Number of Beds / Bil. Katil</label>
+              <input type="number" id="inp-total-beds" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">PIC Name & Phone / Pegawai Bertanggungjawab</label>
+              <input type="text" id="inp-pic-info" placeholder="Nama penyelia & no telefon/sambungan" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
+            </div>
+          </div>
+
+          <!-- Auditor Team Roster (1 to 7 Auditors) -->
+          <div class="mt-8 pt-6 border-t border-slate-100">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">Name of Auditor / Assessor (1 to 7 Auditors)</h3>
+                <p class="text-xs text-slate-500">Assigned audit team members conducting parallel inspection.</p>
+              </div>
+              <button onclick="addAuditorRow()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition">
+                <i class="fa-solid fa-user-plus mr-1"></i>Add Auditor
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                    <th class="py-2.5 px-3 w-12 text-center">No</th>
+                    <th class="py-2.5 px-3">Auditor Name / Nama Penilai</th>
+                    <th class="py-2.5 px-3">Department / Jabatan</th>
+                    <th class="py-2.5 px-3">Designation / Jawatan</th>
+                    <th class="py-2.5 px-3 w-16 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="auditor-table-body" class="divide-y divide-slate-100">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION A: Workplace Management -->
+      <div id="section-pane-A" class="sec-pane hidden space-y-6">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 mb-6 gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-extrabold">SECTION A</span>
+                <span class="text-xs font-bold text-slate-500">Weightage: 20%</span>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mt-1">Workplace Management / Pengurusan Tempat Kerja</h2>
+              <p class="text-xs text-slate-500">Source: Observation, staff interview, patient KAP questions, policies.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="text-right">
+                <span class="text-xs text-slate-400">Section Score</span>
+                <p class="text-sm font-black text-slate-800"><span id="score-num-A">0</span> / 12 (<span id="score-pct-A">0.0</span>%)</p>
+              </div>
+              <button onclick="saveCurrentSection()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
+                <i class="fa-solid fa-floppy-disk mr-1.5"></i>Save Section
+              </button>
+            </div>
+          </div>
+
+          <!-- Item A.1 -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-4">
+            <span class="text-xs font-extrabold text-emerald-700">CRITERIA A.1</span>
+            <h4 class="text-sm font-bold text-slate-900 mt-0.5">Evidence of Tuberculosis (TB) Infection Prevention and Control Activities</h4>
+            <p class="text-xs text-slate-500 mt-1">Comprises of: (a) SOP, (b) IPC Policies and Procedures, (c) Continuous Medical Education (CME), (d) PPE.</p>
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A1" value="4" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">4 Marks:</span> All items present & updated</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A1" value="3" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">3 Marks:</span> All items but not updated</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A1" value="2" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">2 Marks:</span> Only some items present</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A1" value="1" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">1 Mark:</span> Absence of all items</div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Item A.2 -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-4">
+            <span class="text-xs font-extrabold text-emerald-700">CRITERIA A.2</span>
+            <h4 class="text-sm font-bold text-slate-900 mt-0.5">Triage System for Identifying Suspected TB at Point of Entry</h4>
+            <p class="text-xs text-slate-500 mt-1">Fasiliti Kesihatan mempunyai sistem triage untuk mengenalpasti pesakit disyaki TB di pintu masuk.</p>
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A2" value="4" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">4 Marks:</span> Well established, understood & practiced by all</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A2" value="3" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">3 Marks:</span> Understood by some & partially practiced</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A2" value="2" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">2 Marks:</span> Theoretically present but not implemented</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A2" value="1" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">1 Mark:</span> No triage system</div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Item A.3 -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-xs font-extrabold text-emerald-700">CRITERIA A.3</span>
+            <h4 class="text-sm font-bold text-slate-900 mt-0.5">Training & CMEs Pertaining to TB IPC Provided to Healthcare Workers</h4>
+            <p class="text-xs text-slate-500 mt-1">Evidence from (a) CME records, (b) Knowledge assessment upon interview.</p>
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A3" value="4" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">4 Marks:</span> All items present & updated</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A3" value="3" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">3 Marks:</span> All items but not updated</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A3" value="2" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">2 Marks:</span> Only some items present</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="A3" value="1" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionA()">
+                <div class="text-xs"><span class="font-bold text-slate-900">1 Mark:</span> Absence of all items</div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION B: TB Infection Burden -->
+      <div id="section-pane-B" class="sec-pane hidden space-y-6">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 mb-6 gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-extrabold">SECTION B</span>
+                <span class="text-xs font-bold text-slate-500">Weightage: 15%</span>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mt-1">TB Infection Burden in Audited Facility / Beban Jangkitan TB</h2>
+              <p class="text-xs text-slate-500">Source: TB Clinic, UKKP, UKA, KPAS, Medical Records Office.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="text-right">
+                <span class="text-xs text-slate-400">Section Score</span>
+                <p class="text-sm font-black text-slate-800"><span id="score-num-B">0</span> / 12 (<span id="score-pct-B">0.0</span>%)</p>
+              </div>
+              <button onclick="saveCurrentSection()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
+                <i class="fa-solid fa-floppy-disk mr-1.5"></i>Save Section
+              </button>
+            </div>
+          </div>
+
+          <!-- Item B.1 -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-4">
+            <span class="text-xs font-extrabold text-emerald-700">CRITERIA B.1</span>
+            <h4 class="text-sm font-bold text-slate-900 mt-0.5">Does facility receive patients/specimens suspected with TB or confirmed TB?</h4>
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="B1" value="4" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionB()">
+                <div class="text-xs"><span class="font-bold text-slate-900">4 Marks:</span> No (Tidak)</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="B1" value="3" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionB()">
+                <div class="text-xs"><span class="font-bold text-slate-900">3 Marks:</span> Yes, but LTBI patients only</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="B1" value="2" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionB()">
+                <div class="text-xs"><span class="font-bold text-slate-900">2 Marks:</span> Yes, handling TB without DRTB</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="B1" value="1" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionB()">
+                <div class="text-xs"><span class="font-bold text-slate-900">1 Mark:</span> Yes, with Drug-Resistant TB (DRTB)</div>
+              </label>
+            </div>
+
+            <!-- B.2 5-Year Statistical Subtable -->
+            <div class="mt-4 p-3 bg-white rounded-xl border border-slate-200">
+              <p class="text-xs font-bold text-slate-700 mb-2">B.2: Total TB patients treated / specimens handled in last 5 years</p>
+              <div class="grid grid-cols-5 gap-2 text-center text-xs">
+                <div><span class="text-slate-400 font-semibold">2022</span><input type="number" id="tb-pt-2022" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+                <div><span class="text-slate-400 font-semibold">2023</span><input type="number" id="tb-pt-2023" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+                <div><span class="text-slate-400 font-semibold">2024</span><input type="number" id="tb-pt-2024" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+                <div><span class="text-slate-400 font-semibold">2025</span><input type="number" id="tb-pt-2025" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+                <div><span class="text-slate-400 font-semibold">2026</span><input type="number" id="tb-pt-2026" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item B.3 -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-4">
+            <span class="text-xs font-extrabold text-emerald-700">CRITERIA B.3</span>
+            <h4 class="text-sm font-bold text-slate-900 mt-0.5">Does your facility provide TB management service?</h4>
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="B3" value="4" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionB()">
+                <div class="text-xs"><span class="font-bold text-slate-900">4 Marks:</span> No (Tidak)</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="B3" value="1" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionB()">
+                <div class="text-xs"><span class="font-bold text-slate-900">1 Mark:</span> Yes (Ya)</div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Item B.4 -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-xs font-extrabold text-emerald-700">CRITERIA B.4</span>
+            <h4 class="text-sm font-bold text-slate-900 mt-0.5">Are there any TB cases involving Healthcare Workers (HCW) in audited location?</h4>
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="B4" value="4" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionB()">
+                <div class="text-xs"><span class="font-bold text-slate-900">4 Marks:</span> No (Tiada kes petugas)</div>
+              </label>
+              <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+                <input type="radio" name="B4" value="1" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionB()">
+                <div class="text-xs"><span class="font-bold text-slate-900">1 Mark:</span> Yes (Ada kes petugas positif)</div>
+              </label>
+            </div>
+
+            <!-- B.5 5-Year HCW TB Table -->
+            <div class="mt-4 p-3 bg-white rounded-xl border border-slate-200">
+              <p class="text-xs font-bold text-slate-700 mb-2">B.5: Number of positive TB cases among HCW in past 5 years</p>
+              <div class="grid grid-cols-5 gap-2 text-center text-xs">
+                <div><span class="text-slate-400 font-semibold">2022</span><input type="number" id="hcw-tb-2022" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+                <div><span class="text-slate-400 font-semibold">2023</span><input type="number" id="hcw-tb-2023" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+                <div><span class="text-slate-400 font-semibold">2024</span><input type="number" id="hcw-tb-2024" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+                <div><span class="text-slate-400 font-semibold">2025</span><input type="number" id="hcw-tb-2025" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+                <div><span class="text-slate-400 font-semibold">2026</span><input type="number" id="hcw-tb-2026" class="w-full mt-1 border rounded p-1 text-center" placeholder="0" oninput="markDirty()"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION C: TB Screening Programme -->
+      <div id="section-pane-C" class="sec-pane hidden space-y-6">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 mb-6 gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-extrabold">SECTION C</span>
+                <span class="text-xs font-bold text-slate-500">Weightage: 10%</span>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mt-1">TB Screening Programme / Program Saringan TB</h2>
+              <p class="text-xs text-slate-500">Obtained at UKKP / UKA / KPAS records for the audited location.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="text-right">
+                <span class="text-xs text-slate-400">Section Score</span>
+                <p class="text-sm font-black text-slate-800"><span id="score-num-C">0</span> / 24 (<span id="score-pct-C">0.0</span>%)</p>
+              </div>
+              <button onclick="saveCurrentSection()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
+                <i class="fa-solid fa-floppy-disk mr-1.5"></i>Save Section
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA C.1</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">Does health facility conduct TB Screening Programme among HCW?</h4>
+              <div class="mt-2 flex gap-3">
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C1" value="4" onchange="calculateSectionC()"><span>4 - Yes (Ya)</span></label>
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C1" value="1" onchange="calculateSectionC()"><span>1 - No (Tidak)</span></label>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA C.2</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">Pre-placement TB screening in high risk group / high risk area among HCW</h4>
+              <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="C2" value="4" onchange="calculateSectionC()"> <b>4:</b> Within 2 weeks</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="C2" value="3" onchange="calculateSectionC()"> <b>3:</b> > 2 wks & < 3 mos</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="C2" value="2" onchange="calculateSectionC()"> <b>2:</b> > 3 mos after duty</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="C2" value="1" onchange="calculateSectionC()"> <b>1:</b> No records</label>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA C.3</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">Periodic Screening (Symptomatic) in high risk group among HCW</h4>
+              <div class="mt-2 flex gap-3">
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C3" value="4" onchange="calculateSectionC()"><span>4 - Yes (Ya)</span></label>
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C3" value="1" onchange="calculateSectionC()"><span>1 - No (Tidak)</span></label>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA C.4</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">Pre-retirement TB screening in high risk group among HCW</h4>
+              <div class="mt-2 flex gap-3">
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C4" value="4" onchange="calculateSectionC()"><span>4 - Yes (Ya)</span></label>
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C4" value="1" onchange="calculateSectionC()"><span>1 - No (Tidak)</span></label>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA C.5</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">From tests conducted, is there HCW found to be TB positive?</h4>
+              <div class="mt-2 flex gap-3">
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C5" value="4" onchange="calculateSectionC()"><span>4 - No (Tiada)</span></label>
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C5" value="1" onchange="calculateSectionC()"><span>1 - Yes (Ada)</span></label>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA C.6</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">Do you keep records for HCW treated / follow-up / defaulted TB treatment?</h4>
+              <div class="mt-2 flex gap-3">
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C6" value="4" onchange="calculateSectionC()"><span>4 - Yes (Ya)</span></label>
+                <label class="px-4 py-2 bg-white rounded-lg border text-xs font-bold cursor-pointer hover:border-emerald-500 flex items-center space-x-2"><input type="radio" name="C6" value="1" onchange="calculateSectionC()"><span>1 - No (Tidak)</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION D: TB Notification -->
+      <div id="section-pane-D" class="sec-pane hidden space-y-6">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 mb-6 gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-extrabold">SECTION D</span>
+                <span class="text-xs font-bold text-slate-500">Weightage: 10%</span>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mt-1">TB Notification / Notifikasi TB</h2>
+              <p class="text-xs text-slate-500">Compliance with e-Notis, WEHU-L, WEHU-D and outbreak investigation.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="text-right">
+                <span class="text-xs text-slate-400">Section Score</span>
+                <p class="text-sm font-black text-slate-800"><span id="score-num-D">0</span> / 16 (<span id="score-pct-D">0.0</span>%)</p>
+              </div>
+              <button onclick="saveCurrentSection()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
+                <i class="fa-solid fa-floppy-disk mr-1.5"></i>Save Section
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA D.1</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">Evidence of TB Notification to be Reported (e-Notis) in location of audit</h4>
+              <div class="mt-2 flex gap-3 text-xs">
+                <label class="px-4 py-2.5 bg-white rounded-lg border font-bold cursor-pointer hover:border-emerald-500"><input type="radio" name="D1" value="4" onchange="calculateSectionD()"> 4 - Latest record present and complete</label>
+                <label class="px-4 py-2.5 bg-white rounded-lg border font-bold cursor-pointer hover:border-emerald-500"><input type="radio" name="D1" value="1" onchange="calculateSectionD()"> 1 - No record available</label>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA D.2</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">Evidence of WEHU-L Notification in location of audit</h4>
+              <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D2" value="4" onchange="calculateSectionD()"> <b>4:</b> Present & in timeframe</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D2" value="3" onchange="calculateSectionD()"> <b>3:</b> Present NOT in timeframe</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D2" value="2" onchange="calculateSectionD()"> <b>2:</b> No case in location</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D2" value="1" onchange="calculateSectionD()"> <b>1:</b> Case with no record</label>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA D.3</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">Evidence of WEHU-D Notification in location of audit</h4>
+              <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D3" value="4" onchange="calculateSectionD()"> <b>4:</b> Present & in timeframe</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D3" value="3" onchange="calculateSectionD()"> <b>3:</b> Present NOT in timeframe</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D3" value="2" onchange="calculateSectionD()"> <b>2:</b> No case in location</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D3" value="1" onchange="calculateSectionD()"> <b>1:</b> Case with no record</label>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA D.4</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">Evidence of any investigations carried out for all notified cases</h4>
+              <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D4" value="4" onchange="calculateSectionD()"> <b>4:</b> Present & in timeframe</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D4" value="3" onchange="calculateSectionD()"> <b>3:</b> Present NOT in timeframe</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D4" value="2" onchange="calculateSectionD()"> <b>2:</b> No case in location</label>
+                <label class="p-3 bg-white rounded-lg border cursor-pointer hover:border-emerald-500"><input type="radio" name="D4" value="1" onchange="calculateSectionD()"> <b>1:</b> Case with no record</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION E: PPE & Respiratory Protection -->
+      <div id="section-pane-E" class="sec-pane hidden space-y-6">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 mb-6 gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-extrabold">SECTION E</span>
+                <span class="text-xs font-bold text-slate-500">Weightage: 15%</span>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mt-1">Personal Protective Equipment (PPE) / Alat Pelindung Diri</h2>
+              <p class="text-xs text-slate-500">N/A selection dynamically adjusts Total Applicable Criteria (TAC) denominator.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="text-right">
+                <span class="text-xs text-slate-400">Score & TAC</span>
+                <p class="text-sm font-black text-slate-800"><span id="score-num-E">0</span> / <span id="score-denom-E">28</span> (<span id="score-pct-E">0.0</span>%)</p>
+              </div>
+              <button onclick="saveCurrentSection()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
+                <i class="fa-solid fa-floppy-disk mr-1.5"></i>Save Section
+              </button>
+            </div>
+          </div>
+
+          <!-- Items E1 to E7 with N/A support -->
+          <div class="space-y-4" id="ppe-items-container">
+            <!-- Dynamically populated via JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION F: Environmental & Engineering Control -->
+      <div id="section-pane-F" class="sec-pane hidden space-y-6">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 mb-6 gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-extrabold">SECTION F</span>
+                <span class="text-xs font-bold text-slate-500">Weightage: 30%</span>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mt-1">Environmental / Engineering Control (F1 vs F2)</h2>
+              <p class="text-xs text-slate-500">Select either F1 (General Room/Space) OR F2 (Negative Pressure AIIR Room).</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="text-right">
+                <span class="text-xs text-slate-400">Section F Total</span>
+                <p class="text-sm font-black text-slate-800"><span id="score-pct-F">0.0</span>%</p>
+              </div>
+              <button onclick="saveCurrentSection()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
+                <i class="fa-solid fa-floppy-disk mr-1.5"></i>Save Section
+              </button>
+            </div>
+          </div>
+
+          <!-- Room Type Toggle: F1 vs F2 -->
+          <div class="bg-slate-100 p-1.5 rounded-xl flex items-center max-w-md">
+            <button onclick="setEngineeringMode('F1')" id="btn-f-mode-f1" class="flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900">
+              <i class="fa-solid fa-door-open mr-1"></i>Form F1: Non-AIIR General Room
+            </button>
+            <button onclick="setEngineeringMode('F2')" id="btn-f-mode-f2" class="flex-1 py-2 text-xs font-bold rounded-lg transition bg-white text-emerald-700 shadow-sm">
+              <i class="fa-solid fa-fan mr-1"></i>Form F2: AIIR Negative Pressure
+            </button>
+          </div>
+
+          <!-- ================= SUB-FORM F1 ================= -->
+          <div id="subform-f1" class="hidden mt-6 space-y-5">
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-xs flex items-center">
+              <i class="fa-solid fa-circle-info text-base mr-2"></i>
+              <span><b>F1 Weightings:</b> General Design (5%) + Ventilation (95%) + Air Treatment Technology (+5% bonus).</span>
+            </div>
+
+            <!-- F1.1 General -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">1. GENERAL (5%)</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label class="block font-semibold mb-1">1.1 Usage as per original plan?</label>
+                  <select id="f1-1-1" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Tidak</option>
+                    <option value="1">1 - Yes / Ya</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">1.2 Room renovated?</label>
+                  <select id="f1-1-2" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">No / Tidak</option>
+                    <option value="1">Yes / Ya</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">1.3 Layout & ACMV drawing updated?</label>
+                  <select id="f1-1-3" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Tidak</option>
+                    <option value="1">1 - Yes / Ya</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- F1.2 Ventilation -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. VENTILATION (95%)</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label class="block font-semibold mb-1">Air conditioning mode</label>
+                  <select id="f1-ac-mode" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="ac">Air-Conditioned Space</option>
+                    <option value="non-ac">Non Air-Conditioned Space (Natural)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">ACH achieved as per requirement?</label>
+                  <select id="f1-ach" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="1">1 - User has no information</option>
+                    <option value="2">2 - No (Not achieved)</option>
+                    <option value="4">4 - Yes (Achieved)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Airflow pattern clean to less-clean?</label>
+                  <select id="f1-flow" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Faulty air pattern</option>
+                    <option value="1">1 - Yes (Diffuser -> HCW -> Patient -> Grille)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Cross-contamination risk to public/adjacent?</label>
+                  <select id="f1-cross" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - Yes / Risk present</option>
+                    <option value="4">4 - No risk / Safe</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- F1.3 Technology -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">3. AIR TREATMENT TECHNOLOGY (+5% Bonus)</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label class="block font-semibold mb-1">Supplementary air cleaning (In-duct / Upper Room UVGI)?</label>
+                  <select id="f1-tech-uv" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No</option>
+                    <option value="1">1 - Yes</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Portable Air Purifier with HEPA/UVGI used?</label>
+                  <select id="f1-tech-purifier" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No</option>
+                    <option value="1">1 - Yes with adequate coverage</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= SUB-FORM F2 (AIIR) ================= -->
+          <div id="subform-f2" class="mt-6 space-y-5">
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs flex items-center">
+              <i class="fa-solid fa-shield-virus text-base mr-2"></i>
+              <span><b>F2 Weightings:</b> General (10%) + Ventilation (70%) + Exhaust Air System (20%) + Air Treatment (+5% bonus).</span>
+            </div>
+
+            <!-- F2.1 General -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">1. GENERAL AIIR DESIGN (10%)</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label class="block font-semibold mb-1">1.4 Equipped with Anteroom?</label>
+                  <select id="f2-anteroom" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Tidak</option>
+                    <option value="1">1 - Yes / Ya</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">1.5 Jointless ceiling inside anteroom & toilet?</label>
+                  <select id="f2-ceiling" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Tidak</option>
+                    <option value="1">1 - Yes / Ya</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">1.6 Room verified in negative pressure?</label>
+                  <select id="f2-neg-status" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Tidak</option>
+                    <option value="1">1 - Yes / Ya</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- F2.2 Ventilation -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. VENTILATION & PRESSURE DYNAMICS (70%)</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label class="block font-semibold mb-1">ACH achieved (12 ACH new, 6 ACH existing)?</label>
+                  <select id="f2-ach" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Tidak</option>
+                    <option value="1">1 - Yes / Ya</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Room pressure monitor installed?</label>
+                  <select id="f2-monitor" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No monitor</option>
+                    <option value="1">1 - Yes (With gauge)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Measured Differential Pressure (Pa)</label>
+                  <input type="text" id="f2-pa-val" placeholder="-2.5 Pa" class="w-full border rounded-lg p-2 bg-white" oninput="markDirty()">
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Airflow pattern clean to less-clean?</label>
+                  <select id="f2-flow" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Tidak</option>
+                    <option value="1">1 - Yes / Ya</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Cross-contamination risk to adjacent?</label>
+                  <select id="f2-cross" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - Risk present</option>
+                    <option value="4">4 - No risk / Selamat</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">ACMV properly maintained?</label>
+                  <select id="f2-maint" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No records</option>
+                    <option value="1">1 - Yes (With maintenance records)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- F2.3 Exhaust -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">3. EXHAUST AIR SYSTEM (20%)</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label class="block font-semibold mb-1">Air exhausted outside to the roof?</label>
+                  <select id="f2-roof" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Tidak</option>
+                    <option value="1">1 - Yes / Ya</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Filtered with HEPA filter before exhaust?</label>
+                  <select id="f2-hepa" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No / Tidak</option>
+                    <option value="1">1 - Yes / Ya</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Scheduled maintenance for exhaust system?</label>
+                  <select id="f2-ex-maint" class="w-full border rounded-lg p-2 bg-white" onchange="calculateSectionF()">
+                    <option value="0">0 - No</option>
+                    <option value="1">1 - Yes (With record)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 2: OFFICIAL APPENDIX 3 REPORT ==================== -->
+    <div id="view-report" class="hidden space-y-6">
+      
+      <!-- Control Bar -->
+      <div class="no-print bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Appendix 3 Official TB FRAT Report</h2>
+          <p class="text-xs text-slate-500">Guidelines on Prevention and Management of Tuberculosis for HCW MOH 2026</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="window.print()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center">
+            <i class="fa-solid fa-print mr-2"></i>Print / Save Official PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Report Document Container -->
+      <div class="bg-white rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 text-slate-900 print:p-0 print:border-none print:shadow-none">
+        
+        <!-- Header with MOH Crest Placeholder & Titles -->
+        <div class="border-b-2 border-slate-900 pb-5 text-center">
+          <div class="text-xs font-black tracking-widest uppercase text-slate-500 mb-1">MINISTRY OF HEALTH MALAYSIA • KEMENTERIAN KESIHATAN MALAYSIA</div>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 uppercase">BORANG PENILAIAN RISIKO TRANSMISI JANGKITAN TUBERKULOSIS (TB) DI FASILITI KKM</h1>
+          <h2 class="text-sm sm:text-base font-bold text-emerald-800 mt-0.5">FACILITY TB RISK ASSESSMENT TOOLS (TB FRAT) - APPENDIX 3 (2026)</h2>
+        </div>
+
+        <!-- Facility Metadata Table -->
+        <div class="mt-6 border border-slate-300 rounded-xl overflow-hidden text-xs">
+          <div class="bg-slate-100 px-4 py-2 font-bold uppercase border-b border-slate-300 text-slate-700">1. Profil Fasiliti / Facility Profile</div>
+          <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y divide-slate-200">
+            <div class="p-2.5"><span class="text-slate-400 block font-semibold">Nama Fasiliti:</span><b id="rep-name">-</b></div>
+            <div class="p-2.5"><span class="text-slate-400 block font-semibold">Negeri / Lokasi:</span><b id="rep-state">-</b></div>
+            <div class="p-2.5"><span class="text-slate-400 block font-semibold">Jabatan / Unit:</span><b id="rep-dept">-</b></div>
+            <div class="p-2.5"><span class="text-slate-400 block font-semibold">Sublokasi:</span><b id="rep-subloc">-</b></div>
+            <div class="p-2.5"><span class="text-slate-400 block font-semibold">Bil. Kakitangan:</span><b id="rep-staff">-</b></div>
+            <div class="p-2.5"><span class="text-slate-400 block font-semibold">Bil. Katil:</span><b id="rep-beds">-</b></div>
+            <div class="p-2.5"><span class="text-slate-400 block font-semibold">Tarikh Penilaian:</span><b id="rep-date">-</b></div>
+            <div class="p-2.5"><span class="text-slate-400 block font-semibold">Pegawai Bertanggungjawab:</span><b id="rep-pic">-</b></div>
+          </div>
+        </div>
+
+        <!-- Summary Scoring Table (Appendix 3 Page 19 Table) -->
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">2. Ringkasan Pengiraan Risiko (Summary Calculations)</h3>
+            <span class="text-xs text-slate-500">Method: TAC × 4 Denominator Formula</span>
+          </div>
+
+          <table class="w-full text-left text-xs border border-slate-300 border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 border-b border-slate-300 font-bold">
+                <th class="p-2 border-r border-slate-300">Sec</th>
+                <th class="p-2 border-r border-slate-300">Criteria / Kriteria</th>
+                <th class="p-2 border-r border-slate-300 text-center">TAC</th>
+                <th class="p-2 border-r border-slate-300 text-center">Denom (TAC×4)</th>
+                <th class="p-2 border-r border-slate-300 text-center">Numerator</th>
+                <th class="p-2 border-r border-slate-300 text-center">Percentage %</th>
+                <th class="p-2 border-r border-slate-300 text-center">Weightage</th>
+                <th class="p-2 text-right">Weighted Mark</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="p-2 font-bold border-r border-slate-300">A</td>
+                <td class="p-2 border-r border-slate-300">Workplace Management</td>
+                <td class="p-2 border-r border-slate-300 text-center">3</td>
+                <td class="p-2 border-r border-slate-300 text-center">12</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-num-a">0</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-pm-a">0.0%</td>
+                <td class="p-2 border-r border-slate-300 text-center font-semibold">20%</td>
+                <td class="p-2 text-right font-bold" id="rep-tab-wm-a">0.0</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-bold border-r border-slate-300">B</td>
+                <td class="p-2 border-r border-slate-300">TB Infection Burden in Facility</td>
+                <td class="p-2 border-r border-slate-300 text-center">3</td>
+                <td class="p-2 border-r border-slate-300 text-center">12</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-num-b">0</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-pm-b">0.0%</td>
+                <td class="p-2 border-r border-slate-300 text-center font-semibold">15%</td>
+                <td class="p-2 text-right font-bold" id="rep-tab-wm-b">0.0</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-bold border-r border-slate-300">C</td>
+                <td class="p-2 border-r border-slate-300">TB Screening Programme</td>
+                <td class="p-2 border-r border-slate-300 text-center">6</td>
+                <td class="p-2 border-r border-slate-300 text-center">24</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-num-c">0</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-pm-c">0.0%</td>
+                <td class="p-2 border-r border-slate-300 text-center font-semibold">10%</td>
+                <td class="p-2 text-right font-bold" id="rep-tab-wm-c">0.0</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-bold border-r border-slate-300">D</td>
+                <td class="p-2 border-r border-slate-300">TB Notification</td>
+                <td class="p-2 border-r border-slate-300 text-center">4</td>
+                <td class="p-2 border-r border-slate-300 text-center">16</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-num-d">0</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-pm-d">0.0%</td>
+                <td class="p-2 border-r border-slate-300 text-center font-semibold">10%</td>
+                <td class="p-2 text-right font-bold" id="rep-tab-wm-d">0.0</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-bold border-r border-slate-300">E</td>
+                <td class="p-2 border-r border-slate-300">Personal Protective Equipment (PPE)</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-tac-e">0</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-denom-e">28</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-num-e">0</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-pm-e">0.0%</td>
+                <td class="p-2 border-r border-slate-300 text-center font-semibold">15%</td>
+                <td class="p-2 text-right font-bold" id="rep-tab-wm-e">0.0</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-bold border-r border-slate-300">F</td>
+                <td class="p-2 border-r border-slate-300" id="rep-tab-f-title">Environmental Control (F2 - AIIR)</td>
+                <td class="p-2 border-r border-slate-300 text-center">-</td>
+                <td class="p-2 border-r border-slate-300 text-center">-</td>
+                <td class="p-2 border-r border-slate-300 text-center">-</td>
+                <td class="p-2 border-r border-slate-300 text-center" id="rep-tab-pm-f">0.0%</td>
+                <td class="p-2 border-r border-slate-300 text-center font-semibold">30%</td>
+                <td class="p-2 text-right font-bold" id="rep-tab-wm-f">0.0</td>
+              </tr>
+              <tr class="bg-slate-100 font-extrabold text-sm border-t-2 border-slate-300">
+                <td colspan="6" class="p-2 text-right border-r border-slate-300">FINAL WEIGHTED SCORE / MARKAH KESELURUHAN:</td>
+                <td class="p-2 text-center border-r border-slate-300">100%</td>
+                <td class="p-2 text-right text-emerald-800" id="rep-final-score-val">0.0%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Overall Risk Tier Callout Box -->
+        <div class="mt-6 p-4 rounded-xl border border-slate-300 bg-slate-50 flex items-center justify-between">
+          <div>
+            <span class="text-xs uppercase font-extrabold text-slate-500">TB WORKPLACE RISK LEVEL / RISIKO TB FASILITI:</span>
+            <div id="rep-risk-title" class="text-xl font-black text-slate-900 mt-0.5">PENDING ASSESSMENT</div>
+          </div>
+          <div class="text-right text-xs">
+            <span class="text-slate-500">Benchmark Reference:</span>
+            <p class="font-bold text-slate-700">≥80% Low • 60-79% Medium • 40-59% High • ≤39% Critical</p>
+          </div>
+        </div>
+
+        <!-- Auditor Signature Block -->
+        <div class="mt-10 pt-6 border-t border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-6 text-xs text-center">
+          <div class="border-t border-slate-400 pt-2">
+            <p class="font-bold text-slate-800">Lead Auditor Signature</p>
+            <p class="text-slate-500">Name: <span id="rep-sig-lead">-</span></p>
+          </div>
+          <div class="border-t border-slate-400 pt-2">
+            <p class="font-bold text-slate-800">Engineering Auditor</p>
+            <p class="text-slate-500">Section F Inspector</p>
+          </div>
+          <div class="border-t border-slate-400 pt-2">
+            <p class="font-bold text-slate-800">KPAS / UKKP Officer</p>
+            <p class="text-slate-500">Medical Surveillance</p>
+          </div>
+          <div class="border-t border-slate-400 pt-2">
+            <p class="font-bold text-slate-800">Facility Director / PIC</p>
+            <p class="text-slate-500">Acknowledgment</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 3: EXECUTIVE DASHBOARD ==================== -->
+    <div id="view-dashboard" class="hidden space-y-6">
+      
+      <!-- Filter Bar -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">National & State TB Infection Control Analytics</h2>
+          <p class="text-xs text-slate-500">Live analytics compiled from saved facility assessments.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="renderDashboard()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+            <i class="fa-solid fa-arrows-rotate mr-1"></i>Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Stat KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold text-slate-400 uppercase">Total Audits Recorded</span>
+          <h3 id="dash-total-audits" class="text-2xl font-black text-slate-900 mt-1">0</h3>
+          <span class="text-xs text-emerald-600 font-semibold"><i class="fa-solid fa-cloud mr-1"></i>Active in Firestore</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold text-slate-400 uppercase">Low Risk Facilities</span>
+          <h3 id="dash-kpi-low" class="text-2xl font-black text-emerald-600 mt-1">0</h3>
+          <span class="text-xs text-slate-400">Score ≥ 80%</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold text-slate-400 uppercase">High / Critical Risk</span>
+          <h3 id="dash-kpi-high" class="text-2xl font-black text-rose-600 mt-1">0</h3>
+          <span class="text-xs text-slate-400">Requires 30-day intervention</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold text-slate-400 uppercase">Average Score</span>
+          <h3 id="dash-kpi-avg" class="text-2xl font-black text-slate-800 mt-1">0.0%</h3>
+          <span class="text-xs text-slate-400" id="dash-kpi-tier-desc">-</span>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h4 class="text-sm font-bold text-slate-900 mb-4">Risk Category Distribution</h4>
+          <div class="h-64 flex items-center justify-center">
+            <canvas id="chartRiskTiers"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h4 class="text-sm font-bold text-slate-900 mb-4">Current Facility Breakdown Radar</h4>
+          <div class="h-64 flex items-center justify-center">
+            <canvas id="chartSectionRadar"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 4: DATA GRID & EXPORT ==================== -->
+    <div id="view-data" class="hidden space-y-6">
+      
+      <!-- Action Toolbar -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">National TB FRAT Database & Exporter</h2>
+          <p class="text-xs text-slate-500">Download formatted files for SPSS, Excel, R, or extract prompts for LLM AI Analysis.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="exportToCSV()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center">
+            <i class="fa-solid fa-file-excel mr-1.5"></i>Export CSV / Excel
+          </button>
+          <button onclick="exportForAI()" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center">
+            <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Copy AI Prompt Package
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                <th class="py-3 px-4">Audit ID</th>
+                <th class="py-3 px-4">Facility Name</th>
+                <th class="py-3 px-4">State</th>
+                <th class="py-3 px-4">Date</th>
+                <th class="py-3 px-4 text-center">Score</th>
+                <th class="py-3 px-4 text-center">Risk Tier</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="data-grid-tbody" class="divide-y divide-slate-100">
+              <!-- Dynamically populated from actual Firestore data -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== MODAL 1: AUDITOR PROFILE REGISTRATION ==================== -->
+  <div id="modal-auditor-profile" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Auditor Profile / Profil Penilai</h3>
+          <p class="text-xs text-slate-500">Your profile is stamped onto all audits you lead or participate in.</p>
+        </div>
+        <button onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="mt-4 space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Auditor Full Name / Nama Penuh *</label>
+          <input type="text" id="prof-name" placeholder="Dr. / En. / Pn. ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Staff ID / No. Kad Pengenalan *</label>
+            <input type="text" id="prof-staff-id" placeholder="MOH / MyKad ID" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Designation / Jawatan *</label>
+            <input type="text" id="prof-role" placeholder="Pegawai Perubatan / Jurutera" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Assigned State / JKN *</label>
+            <select id="prof-state" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+              <option value="Selangor">Selangor</option>
+              <option value="WPKL & Putrajaya">WPKL & Putrajaya</option>
+              <option value="Johor">Johor</option>
+              <option value="Perak">Perak</option>
+              <option value="Penang">Pulau Pinang</option>
+              <option value="Kedah">Kedah</option>
+              <option value="Pahang">Pahang</option>
+              <option value="Terengganu">Terengganu</option>
+              <option value="Kelantan">Kelantan</option>
+              <option value="Negeri Sembilan">Negeri Sembilan</option>
+              <option value="Melaka">Melaka</option>
+              <option value="Perlis">Perlis</option>
+              <option value="Sabah">Sabah</option>
+              <option value="Sarawak">Sarawak</option>
+              <option value="WP Labuan">WP Labuan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Phone / No. Telefon</label>
+            <input type="text" id="prof-phone" placeholder="012-3456789" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Base Facility / Unit Asal</label>
+          <input type="text" id="prof-facility" placeholder="JKN Selangor / Hospital Shah Alam / UKKP" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div class="flex gap-2 pt-3 border-t border-slate-100">
+          <button onclick="saveAuditorProfile()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition">
+            Save Profile / Simpan Profil
+          </button>
+          <button onclick="closeProfileModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: CREATE NEW AUDIT ==================== -->
+  <div id="modal-create-audit" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Create New Audit / Daftar Audit Baru</h3>
+          <p class="text-xs text-slate-500">Initializes a new blank assessment in the cloud database.</p>
+        </div>
+        <button onclick="closeCreateAuditModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="mt-4 space-y-3.5 text-xs">
+        <div>
+          <div class="flex items-center justify-between">
+            <label class="block font-bold text-slate-700 uppercase mb-1">Generated Audit ID *</label>
+            <button onclick="generateAuditIdString()" class="text-emerald-600 hover:underline font-bold text-[11px]"><i class="fa-solid fa-rotate mr-1"></i>Regenerate</button>
+          </div>
+          <input type="text" id="new-audit-id" class="w-full bg-slate-100 font-mono font-bold text-slate-800 border border-slate-200 rounded-xl px-3 py-2 text-sm uppercase">
+          <p class="text-[11px] text-slate-500 mt-1">Share this unique ID with your team of 5–7 auditors so they can join.</p>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">State / Negeri *</label>
+          <select id="new-audit-state" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" onchange="generateAuditIdString()">
+            <option value="Selangor">Selangor</option>
+            <option value="WPKL & Putrajaya">WPKL & Putrajaya</option>
+            <option value="Johor">Johor</option>
+            <option value="Perak">Perak</option>
+            <option value="Penang">Pulau Pinang</option>
+            <option value="Kedah">Kedah</option>
+            <option value="Pahang">Pahang</option>
+            <option value="Terengganu">Terengganu</option>
+            <option value="Kelantan">Kelantan</option>
+            <option value="Negeri Sembilan">Negeri Sembilan</option>
+            <option value="Melaka">Melaka</option>
+            <option value="Perlis">Perlis</option>
+            <option value="Sabah">Sabah</option>
+            <option value="Sarawak">Sarawak</option>
+            <option value="WP Labuan">WP Labuan</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Facility Name / Nama Fasiliti *</label>
+          <input type="text" id="new-audit-facility" placeholder="Contoh: Hospital Sungai Buloh" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Department / Unit</label>
+          <input type="text" id="new-audit-dept" placeholder="Contoh: Jabatan Kecemasan & Trauma" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Sublocation / Sublokasi *</label>
+          <input type="text" id="new-audit-subloc" placeholder="Contoh: Bilik Rawatan / Bilik Isolasi 1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Assessment Date *</label>
+            <input type="date" id="new-audit-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Total Staffs</label>
+            <input type="number" id="new-audit-staff" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-3 border-t border-slate-100">
+          <button onclick="submitCreateAudit()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition">
+            <i class="fa-solid fa-play mr-1.5"></i>Start Assessment Now
+          </button>
+          <button onclick="closeCreateAuditModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: JOIN AUDIT CODE ==================== -->
+  <div id="modal-join-audit" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-base font-bold text-slate-900">Join Existing Audit / Sertai Audit</h3>
+        <button onclick="closeJoinAuditModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="mt-4 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Enter Audit Code (e.g. FRAT-2026-SEL-104)</label>
+          <input type="text" id="inp-join-code" placeholder="FRAT-2026-..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono font-bold uppercase focus:ring-2 focus:ring-emerald-500">
+          <p class="text-[11px] text-slate-500 mt-1">Get this code from your Lead Auditor to enter your assigned section in sync.</p>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="submitJoinAudit()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition">
+            Open & Sync Audit
+          </button>
+          <button onclick="closeJoinAuditModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Alert Box -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-xs">
+      <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+      <span id="toast-message" class="font-semibold">Action completed successfully.</span>
+    </div>
+  </div>
+
+  <!-- ==================== AUTHENTICATION OVERLAY (EMAIL / PASSWORD GATE) ==================== -->
+  <div id="auth-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative overflow-hidden">
+      <!-- Top Crest & Header -->
+      <div class="text-center pb-5 border-b border-slate-100">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 mb-3">
+          <i class="fa-solid fa-lungs-virus text-2xl"></i>
+        </div>
+        <h2 class="text-xl font-black text-slate-900">TB FRAT 2026</h2>
+        <p class="text-xs text-slate-500 mt-1">Ministry of Health Malaysia • Portal Log Masuk Penilai</p>
+      </div>
+
+      <!-- Auth Mode Tabs (Sign In vs Register) -->
+      <div class="flex bg-slate-100 p-1 rounded-xl mt-5 text-xs font-bold">
+        <button id="tab-auth-login" onclick="switchAuthMode('login')" class="flex-1 py-2 rounded-lg bg-white text-emerald-800 shadow-sm transition">
+          Log Masuk / Sign In
+        </button>
+        <button id="tab-auth-register" onclick="switchAuthMode('register')" class="flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition">
+          Daftar Akaun / Register
+        </button>
+      </div>
+
+      <!-- Error / Notice Box -->
+      <div id="auth-error-box" class="hidden mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start space-x-2">
+        <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+        <span id="auth-error-msg">Error message goes here</span>
+      </div>
+
+      <!-- Form: Sign In -->
+      <form id="form-auth-login" onsubmit="event.preventDefault(); submitLogin();" class="mt-5 space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Email / Emel Rasmi *</label>
+          <div class="relative">
+            <i class="fa-solid fa-envelope absolute left-3.5 top-3 text-slate-400"></i>
+            <input type="email" id="login-email" required placeholder="nama@moh.gov.my" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-700 uppercase">Kata Laluan / Password *</label>
+            <button type="button" onclick="handlePasswordResetPrompt()" class="text-emerald-600 hover:underline font-bold text-[11px]">Lupa kata laluan?</button>
+          </div>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400"></i>
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+        <button type="submit" id="btn-login-submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center justify-center">
+          <i class="fa-solid fa-right-to-bracket mr-2"></i>Log Masuk ke Sistem
+        </button>
+      </form>
+
+      <!-- Form: Register New Auditor -->
+      <form id="form-auth-register" onsubmit="event.preventDefault(); submitRegister();" class="hidden mt-5 space-y-3 text-xs max-h-[60vh] overflow-y-auto pr-1">
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Nama Penuh / Auditor Full Name *</label>
+          <input type="text" id="reg-name" required placeholder="Dr. / En. / Pn. Ahmad..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Jawatan / Designation *</label>
+            <input type="text" id="reg-role" required placeholder="Pakar / Pegawai Perubatan" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Negeri / JKN *</label>
+            <select id="reg-state" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+              <option value="Selangor">Selangor</option>
+              <option value="WPKL & Putrajaya">WPKL & Putrajaya</option>
+              <option value="Johor">Johor</option>
+              <option value="Perak">Perak</option>
+              <option value="Penang">Pulau Pinang</option>
+              <option value="Kedah">Kedah</option>
+              <option value="Pahang">Pahang</option>
+              <option value="Terengganu">Terengganu</option>
+              <option value="Kelantan">Kelantan</option>
+              <option value="Negeri Sembilan">Negeri Sembilan</option>
+              <option value="Melaka">Melaka</option>
+              <option value="Perlis">Perlis</option>
+              <option value="Sabah">Sabah</option>
+              <option value="Sarawak">Sarawak</option>
+              <option value="WP Labuan">WP Labuan</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Emel Rasmi / Email *</label>
+          <input type="email" id="reg-email" required placeholder="nama@moh.gov.my" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Kata Laluan / Password * (Min 6 aksara)</label>
+          <input type="password" id="reg-password" required minlength="6" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <button type="submit" id="btn-reg-submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center justify-center">
+          <i class="fa-solid fa-user-plus mr-2"></i>Daftar Akaun Penilai
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      signOut, 
+      onAuthStateChanged, 
+      sendPasswordResetEmail,
+      updateProfile
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      getDoc, 
+      onSnapshot, 
+      getDocs, 
+      collection 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Firebase credentials
+    const firebaseConfig = {
+      apiKey: "AIzaSyCtWGynzfIkB79iW1sW2JpJ08gzMEtHjDk",
+      authDomain: "tb-frat26.firebaseapp.com",
+      projectId: "tb-frat26",
+      storageBucket: "tb-frat26.firebasestorage.app",
+      messagingSenderId: "158105548847",
+      appId: "1:158105548847:web:ce7ffa66a6998f67f4eeda",
+      measurementId: "G-B1H4TR52G0"
+    };
+
+    let app, auth, db;
+    let currentUser = null;
+    let activeAuditId = null;
+    let activeSection = "profile";
+    let activeEngMode = "F2";
+    let unsubscribeAudit = null;
+
+    // Current Auditor Local Profile Model
+    let auditorProfile = {
+      name: "",
+      email: "",
+      staffId: "",
+      role: "",
+      state: "Selangor",
+      facility: "",
+      phone: ""
+    };
+
+    // Clean In-Memory Blank Audit Model (NO hardcoded fake numbers)
+    let currentAuditData = {
+      auditCode: "",
+      state: "Selangor",
+      facilityName: "",
+      address: "",
+      department: "",
+      sublocation: "",
+      date: new Date().toISOString().split('T')[0],
+      totalStaff: "",
+      totalBeds: "",
+      pic: "",
+      auditors: [],
+      scores: {
+        A: { num: 0, denom: 12, pm: 0, weight: 20, weightedMark: 0 },
+        B: { num: 0, denom: 12, pm: 0, weight: 15, weightedMark: 0 },
+        C: { num: 0, denom: 24, pm: 0, weight: 10, weightedMark: 0 },
+        D: { num: 0, denom: 16, pm: 0, weight: 10, weightedMark: 0 },
+        E: { num: 0, denom: 28, tac: 0, pm: 0, weight: 15, weightedMark: 0 },
+        F: { mode: 'F2', pm: 0, weight: 30, weightedMark: 0 },
+      },
+      finalScore: 0.0,
+      riskCategory: "Pending Assessment"
+    };
+
+    const PPE_CRITERIA = [
+      { id: 'E1', title: '1. Surgical masks supply and usage for patient', desc: 'Pelitup muka pembedahan dibekalkan dan diguna oleh pesakit' },
+      { id: 'E2', title: '2. Surgical mask supply and usage for HCW', desc: 'Pembekalan dan penggunaan pelitup muka pembedahan untuk petugas kesihatan' },
+      { id: 'E3', title: '3. N95 respirators supply & seal check/fit test for HCW', desc: 'Pembekalan & penggunaan N95 dengan seal check dan fit test' },
+      { id: 'E4', title: '4. Powered Air Purifying Respirator (PAPR) during AGP', desc: 'PAPR semasa prosedur penghasil aerosol (intubasi, post-mortem)' },
+      { id: 'E5', title: '5. PPE storage organisation & accessibility', desc: 'Penyimpanan PPE teratur dan mudah diakses oleh kakitangan' },
+      { id: 'E6', title: '6. Adequate PPE according to technical specifications', desc: 'Alat pelindung diri memadai mengikut spesifikasi teknikal' },
+      { id: 'E7', title: '7. Evidence of competency / compliance regarding PPE', desc: 'Kompetensi: Knowledge, kesesuaian, teknik penggunaan, pelupusan' }
+    ];
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      loadAuditorProfileFromStorage();
+      renderPPEItems();
+      document.getElementById('new-audit-date').value = new Date().toISOString().split('T')[0];
+
+      try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        // Listen for authentication changes
+        onAuthStateChanged(auth, async (user) => {
+          currentUser = user;
+          const overlay = document.getElementById('auth-overlay');
+
+          if (user) {
+            // User is signed in
+            overlay.classList.add('hidden');
+            auditorProfile.email = user.email || '';
+            if (user.displayName && !auditorProfile.name) {
+              auditorProfile.name = user.displayName;
+            }
+
+            // Sync user profile from Firestore users collection if available
+            try {
+              const uDoc = await getDoc(doc(db, "auditors", user.uid));
+              if (uDoc.exists()) {
+                auditorProfile = { ...auditorProfile, ...uDoc.data(), email: user.email };
+                localStorage.setItem('tb_frat_auditor_profile', JSON.stringify(auditorProfile));
+              }
+            } catch (e) {
+              console.warn("Could not fetch remote profile:", e);
+            }
+
+            updateProfileUI();
+            showToast(`Log masuk sebagai ${user.email}`, "success");
+            fetchAuditsList();
+          } else {
+            // User is logged out: show modal gate
+            overlay.classList.remove('hidden');
+            document.getElementById('hub-audits-table-body').innerHTML = `
+              <tr>
+                <td colspan="8" class="text-center py-6 text-slate-400">Sila log masuk untuk mengakses audit.</td>
+              </tr>
+            `;
+          }
+        });
+
+      } catch (err) {
+        console.warn("Storage connection notice:", err);
+      }
+    });
+
+    // Auth Switcher & Handlers
+    window.switchAuthMode = function(mode) {
+      const tabLogin = document.getElementById('tab-auth-login');
+      const tabReg = document.getElementById('tab-auth-register');
+      const formLogin = document.getElementById('form-auth-login');
+      const formReg = document.getElementById('form-auth-register');
+      hideAuthError();
+
+      if (mode === 'login') {
+        tabLogin.className = "flex-1 py-2 rounded-lg bg-white text-emerald-800 shadow-sm transition";
+        tabReg.className = "flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition";
+        formLogin.classList.remove('hidden');
+        formReg.classList.add('hidden');
+      } else {
+        tabReg.className = "flex-1 py-2 rounded-lg bg-white text-emerald-800 shadow-sm transition";
+        tabLogin.className = "flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition";
+        formReg.classList.remove('hidden');
+        formLogin.classList.add('hidden');
+      }
+    };
+
+    function showAuthError(msg) {
+      const box = document.getElementById('auth-error-box');
+      const text = document.getElementById('auth-error-msg');
+      text.innerText = msg;
+      box.classList.remove('hidden');
+    }
+
+    function hideAuthError() {
+      document.getElementById('auth-error-box').classList.add('hidden');
+    }
+
+    window.submitLogin = async function() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('btn-login-submit');
+
+      hideAuthError();
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mengesahkan...`;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        let msg = "Ralat log masuk: " + err.message;
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+          msg = "Emel atau kata laluan tidak sah. Sila semak semula.";
+        } else if (err.code === 'auth/too-many-requests') {
+          msg = "Akaun disekat sementara kerana terlalu banyak percubaan gagal. Sila cuba sebentar lagi.";
+        }
+        showAuthError(msg);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-right-to-bracket mr-2"></i>Log Masuk ke Sistem`;
+      }
+    };
+
+    window.submitRegister = async function() {
+      const name = document.getElementById('reg-name').value.trim();
+      const role = document.getElementById('reg-role').value.trim();
+      const state = document.getElementById('reg-state').value;
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const btn = document.getElementById('btn-reg-submit');
+
+      hideAuthError();
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mendaftar...`;
+
+      try {
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCred.user, { displayName: name });
+
+        auditorProfile = {
+          name,
+          email,
+          role,
+          state,
+          staffId: "",
+          facility: "",
+          phone: ""
+        };
+
+        // Save profile to Firestore
+        await setDoc(doc(db, "auditors", userCred.user.uid), auditorProfile);
+        localStorage.setItem('tb_frat_auditor_profile', JSON.stringify(auditorProfile));
+
+      } catch (err) {
+        let msg = "Ralat pendaftaran: " + err.message;
+        if (err.code === 'auth/email-already-in-use') {
+          msg = "Emel ini telah didaftarkan. Sila log masuk.";
+        } else if (err.code === 'auth/weak-password') {
+          msg = "Kata laluan terlalu lemah (minimum 6 aksara).";
+        }
+        showAuthError(msg);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-user-plus mr-2"></i>Daftar Akaun Penilai`;
+      }
+    };
+
+    window.handlePasswordResetPrompt = async function() {
+      const email = document.getElementById('login-email').value.trim();
+      if (!email) {
+        showAuthError("Sila masukkan alamat emel anda di atas dahulu, kemudian klik 'Lupa kata laluan'.");
+        return;
+      }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showToast("Pautan tetapan semula kata laluan telah dihantar ke emel anda.", "info");
+      } catch (err) {
+        showAuthError("Gagal menghantar emel: " + err.message);
+      }
+    };
+
+    window.handleSignOut = async function() {
+      try {
+        if (unsubscribeAudit) {
+          unsubscribeAudit();
+          unsubscribeAudit = null;
+        }
+        await signOut(auth);
+        showToast("Anda telah berjaya log keluar.", "info");
+      } catch (err) {
+        console.error("Sign out error:", err);
+      }
+    };
+
+    function loadAuditorProfileFromStorage() {
+      try {
+        const saved = localStorage.getItem('tb_frat_auditor_profile');
+        if (saved) {
+          auditorProfile = { ...auditorProfile, ...JSON.parse(saved) };
+          updateProfileUI();
+        }
+      } catch (e) {
+        console.warn("Could not read local profile:", e);
+      }
+    }
+
+    function updateProfileUI() {
+      const name = auditorProfile.name || 'Auditor Profile';
+      const initial = (name.replace(/^(Dr\.|En\.|Pn\.)\s*/i, '').trim()[0] || 'A').toUpperCase();
+      
+      const headerName = document.getElementById('header-auditor-name');
+      const headerInitial = document.getElementById('header-avatar-initial');
+      const hubName = document.getElementById('hub-auditor-name');
+      const hubRole = document.getElementById('hub-auditor-designation');
+      const hubState = document.getElementById('hub-auditor-state');
+      const hubId = document.getElementById('hub-auditor-id');
+      const hubAvatar = document.getElementById('hub-avatar-badge');
+
+      if (headerName) headerName.innerText = name;
+      if (headerInitial) headerInitial.innerText = initial;
+      if (hubName) hubName.innerText = auditorProfile.name || 'Auditor Not Registered';
+      if (hubRole) hubRole.innerText = auditorProfile.role || 'Tap edit to set your particulars';
+      if (hubState) hubState.innerText = auditorProfile.state || 'Selangor';
+      if (hubId) hubId.innerText = auditorProfile.staffId || (currentUser ? currentUser.uid.substring(0, 8).toUpperCase() : 'Unassigned');
+      if (hubAvatar) hubAvatar.innerText = initial;
+    }
+
+    window.openProfileModal = function() {
+      document.getElementById('prof-name').value = auditorProfile.name || '';
+      document.getElementById('prof-staff-id').value = auditorProfile.staffId || '';
+      document.getElementById('prof-role').value = auditorProfile.role || '';
+      document.getElementById('prof-state').value = auditorProfile.state || 'Selangor';
+      document.getElementById('prof-phone').value = auditorProfile.phone || '';
+      document.getElementById('prof-facility').value = auditorProfile.facility || '';
+      document.getElementById('modal-auditor-profile').classList.remove('hidden');
+    };
+
+    window.closeProfileModal = function() {
+      document.getElementById('modal-auditor-profile').classList.add('hidden');
+    };
+
+    window.saveAuditorProfile = async function() {
+      auditorProfile.name = document.getElementById('prof-name').value.trim();
+      auditorProfile.staffId = document.getElementById('prof-staff-id').value.trim();
+      auditorProfile.role = document.getElementById('prof-role').value.trim();
+      auditorProfile.state = document.getElementById('prof-state').value;
+      auditorProfile.phone = document.getElementById('prof-phone').value.trim();
+      auditorProfile.facility = document.getElementById('prof-facility').value.trim();
+
+      localStorage.setItem('tb_frat_auditor_profile', JSON.stringify(auditorProfile));
+      updateProfileUI();
+
+      if (currentUser && db) {
+        try {
+          await setDoc(doc(db, "auditors", currentUser.uid), auditorProfile, { merge: true });
+        } catch (e) {
+          console.warn("Could not save profile remotely:", e);
+        }
+      }
+
+      closeProfileModal();
+      showToast("Profil penilai berjaya dikemaskini!", "success");
+    };
+
+    window.showHubView = function() {
+      document.getElementById('view-hub').classList.remove('hidden');
+      document.getElementById('view-form').classList.add('hidden');
+      document.getElementById('view-report').classList.add('hidden');
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-data').classList.add('hidden');
+
+      document.getElementById('audit-nav-bar').classList.add('hidden');
+      document.getElementById('header-audit-badge').classList.add('hidden');
+      document.getElementById('btn-return-hub').classList.add('hidden');
+
+      if (unsubscribeAudit) {
+        unsubscribeAudit();
+        unsubscribeAudit = null;
+      }
+      fetchAuditsList();
+    };
+
+    window.openCreateAuditModal = function() {
+      generateAuditIdString();
+      document.getElementById('new-audit-facility').value = '';
+      document.getElementById('new-audit-dept').value = '';
+      document.getElementById('new-audit-subloc').value = '';
+      document.getElementById('new-audit-staff').value = '';
+      document.getElementById('modal-create-audit').classList.remove('hidden');
+    };
+
+    window.closeCreateAuditModal = function() {
+      document.getElementById('modal-create-audit').classList.add('hidden');
+    };
+
+    window.generateAuditIdString = function() {
+      const state = document.getElementById('new-audit-state')?.value || 'Selangor';
+      const stateMap = {
+        'Selangor': 'SEL', 'WPKL & Putrajaya': 'WPKL', 'Johor': 'JHR', 'Perak': 'PRK',
+        'Penang': 'PNG', 'Kedah': 'KDH', 'Pahang': 'PHG', 'Terengganu': 'TRG',
+        'Kelantan': 'KTN', 'Negeri Sembilan': 'NSN', 'Melaka': 'MLK', 'Perlis': 'PLS',
+        'Sabah': 'SBH', 'Sarawak': 'SWK', 'WP Labuan': 'LBN'
+      };
+      const code = stateMap[state] || 'MOH';
+      const rand = Math.floor(100 + Math.random() * 900);
+      const auditCode = `FRAT-2026-${code}-${rand}`;
+      const input = document.getElementById('new-audit-id');
+      if (input) input.value = auditCode;
+      return auditCode;
+    };
+
+    window.submitCreateAudit = async function() {
+      const code = document.getElementById('new-audit-id').value.trim().toUpperCase();
+      const facility = document.getElementById('new-audit-facility').value.trim();
+      const state = document.getElementById('new-audit-state').value;
+      const dept = document.getElementById('new-audit-dept').value.trim();
+      const subloc = document.getElementById('new-audit-subloc').value.trim();
+      const date = document.getElementById('new-audit-date').value;
+      const staff = document.getElementById('new-audit-staff').value;
+
+      if (!facility) {
+        showToast("Sila masukkan nama fasiliti.", "warning");
+        return;
+      }
+
+      activeAuditId = code;
+      currentAuditData = {
+        auditCode: code,
+        state: state,
+        facilityName: facility,
+        address: "",
+        department: dept,
+        sublocation: subloc,
+        date: date || new Date().toISOString().split('T')[0],
+        totalStaff: staff || "",
+        totalBeds: "",
+        pic: "",
+        auditors: [{
+          name: auditorProfile.name || currentUser?.displayName || 'Lead Auditor',
+          department: auditorProfile.facility || dept || 'Infection Control',
+          role: auditorProfile.role || 'Assessor'
+        }],
+        scores: {
+          A: { num: 0, denom: 12, pm: 0, weight: 20, weightedMark: 0 },
+          B: { num: 0, denom: 12, pm: 0, weight: 15, weightedMark: 0 },
+          C: { num: 0, denom: 24, pm: 0, weight: 10, weightedMark: 0 },
+          D: { num: 0, denom: 16, pm: 0, weight: 10, weightedMark: 0 },
+          E: { num: 0, denom: 28, tac: 0, pm: 0, weight: 15, weightedMark: 0 },
+          F: { mode: 'F2', pm: 0, weight: 30, weightedMark: 0 }
+        },
+        finalScore: 0.0,
+        riskCategory: "Pending Assessment"
+      };
+
+      closeCreateAuditModal();
+      populateFormFromAuditData(currentAuditData);
+      await saveAuditToFirestore();
+      setupAuditRealtimeListener(code);
+
+      document.getElementById('view-hub').classList.add('hidden');
+      document.getElementById('audit-nav-bar').classList.remove('hidden');
+      document.getElementById('header-audit-badge').classList.remove('hidden');
+      document.getElementById('header-audit-code-disp').innerText = code;
+      document.getElementById('btn-return-hub').classList.remove('hidden');
+
+      switchView('form');
+      showToast(`Audit ${code} berjaya didaftarkan!`, "success");
+    };
+
+    window.openJoinAuditModal = function() {
+      document.getElementById('inp-join-code').value = '';
+      document.getElementById('modal-join-audit').classList.remove('hidden');
+    };
+
+    window.closeJoinAuditModal = function() {
+      document.getElementById('modal-join-audit').classList.add('hidden');
+    };
+
+    window.submitJoinAudit = async function() {
+      const code = document.getElementById('inp-join-code').value.trim().toUpperCase();
+      if (!code) {
+        showToast("Sila masukkan Kod Audit yang sah.", "warning");
+        return;
+      }
+      closeJoinAuditModal();
+      await openExistingAudit(code);
+    };
+
+    function setupAuditRealtimeListener(auditId) {
+      if (unsubscribeAudit) {
+        unsubscribeAudit();
+      }
+      if (!db) return;
+
+      const docRef = doc(db, "audits", auditId);
+      unsubscribeAudit = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const remote = docSnap.data();
+          currentAuditData = { ...currentAuditData, ...remote };
+          populateFormFromAuditData(currentAuditData);
+        }
+      }, (err) => {
+        console.warn("Real-time listener warning:", err);
+      });
+    }
+
+    function populateFormFromAuditData(data) {
+      document.getElementById('inp-facility-name').value = data.facilityName || '';
+      document.getElementById('inp-state').value = data.state || 'Selangor';
+      document.getElementById('inp-facility-address').value = data.address || '';
+      document.getElementById('inp-department').value = data.department || '';
+      document.getElementById('inp-sublocation').value = data.sublocation || '';
+      document.getElementById('inp-assessment-date').value = data.date || '';
+      document.getElementById('inp-total-staff').value = data.totalStaff || '';
+      document.getElementById('inp-total-beds').value = data.totalBeds || '';
+      document.getElementById('inp-pic-info').value = data.pic || '';
+
+      document.getElementById('disp-facility-name').innerText = data.facilityName || 'Facility';
+      document.getElementById('disp-sublocation').innerText = data.sublocation || 'Location unassigned';
+      document.getElementById('current-state-badge').innerText = data.state || 'State';
+      document.getElementById('current-audit-code-pill').innerText = data.auditCode || activeAuditId || 'FRAT-000';
+
+      renderAuditorTableRows(data.auditors || []);
+      calculateAll();
+    }
+
+    function renderAuditorTableRows(auditors) {
+      const tbody = document.getElementById('auditor-table-body');
+      if (!tbody) return;
+
+      if (!auditors || auditors.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-4 text-slate-400">Tiada penilai didaftarkan. Klik "Add Auditor" untuk menambah ahli pasukan.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = auditors.map((a, i) => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-2.5 px-3 text-center font-bold text-slate-500">${i + 1}</td>
+          <td class="py-2.5 px-3">
+            <input type="text" value="${a.name || ''}" placeholder="Nama Penilai" class="w-full bg-transparent border-b border-transparent focus:border-emerald-500 font-semibold text-slate-800" onchange="updateAuditorData(${i}, 'name', this.value)">
+          </td>
+          <td class="py-2.5 px-3">
+            <input type="text" value="${a.department || ''}" placeholder="Jabatan" class="w-full bg-transparent border-b border-transparent focus:border-emerald-500 text-slate-600" onchange="updateAuditorData(${i}, 'department', this.value)">
+          </td>
+          <td class="py-2.5 px-3">
+            <input type="text" value="${a.role || ''}" placeholder="Jawatan" class="w-full bg-transparent border-b border-transparent focus:border-emerald-500 text-slate-600" onchange="updateAuditorData(${i}, 'role', this.value)">
+          </td>
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="removeAuditorRow(${i})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    window.addAuditorRow = function() {
+      if (!currentAuditData.auditors) currentAuditData.auditors = [];
+      if (currentAuditData.auditors.length >= 7) {
+        showToast("Maksimum 7 penilai dibenarkan bagi setiap audit.", "warning");
+        return;
+      }
+      currentAuditData.auditors.push({ name: "", department: "", role: "" });
+      renderAuditorTableRows(currentAuditData.auditors);
+      saveAuditToFirestore();
+    };
+
+    window.removeAuditorRow = function(index) {
+      if (!currentAuditData.auditors) return;
+      currentAuditData.auditors.splice(index, 1);
+      renderAuditorTableRows(currentAuditData.auditors);
+      saveAuditToFirestore();
+    };
+
+    window.updateAuditorData = function(index, field, value) {
+      if (currentAuditData.auditors && currentAuditData.auditors[index]) {
+        currentAuditData.auditors[index][field] = value;
+        saveAuditToFirestore();
+      }
+    };
+
+    window.fetchAuditsList = async function() {
+      const tbody = document.getElementById('hub-audits-table-body');
+      if (!tbody) return;
+
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="text-center py-8 text-slate-400">
+            <i class="fa-solid fa-spinner fa-spin text-xl mb-2 text-emerald-600 block"></i>
+            Menyelaras audit dari Firestore...
+          </td>
+        </tr>
+      `;
+
+      if (!db || !currentUser) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-6 text-slate-400">Log masuk untuk menyemak audit yang disimpan.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      try {
+        const querySnap = await getDocs(collection(db, "audits"));
+        const list = [];
+        querySnap.forEach(d => {
+          list.push({ id: d.id, ...d.data() });
+        });
+
+        document.getElementById('hub-total-audits-count').innerText = list.length;
+        document.getElementById('dash-total-audits').innerText = list.length;
+
+        if (list.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" class="text-center py-8 text-slate-400">
+                <i class="fa-solid fa-folder-open text-2xl text-slate-300 block mb-2"></i>
+                Tiada rekod audit lagi. Klik <b>"Create New Audit"</b> untuk memulakan penilaian fasiliti pertama anda.
+              </td>
+            </tr>
+          `;
+          renderDataGridWithList([]);
+          return;
+        }
+
+        tbody.innerHTML = list.map(item => {
+          let badgeColor = item.finalScore >= 80 ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
+                           item.finalScore >= 60 ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                           item.finalScore > 0 ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-slate-100 text-slate-600 border-slate-300';
+
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-3 px-4 font-mono font-bold text-slate-800">${item.id}</td>
+              <td class="py-3 px-4 font-bold text-slate-900">${item.facilityName || 'Unnamed'}</td>
+              <td class="py-3 px-4 text-slate-600">${item.department || '-'} / ${item.sublocation || '-'}</td>
+              <td class="py-3 px-4 text-slate-600">${item.state || '-'}</td>
+              <td class="py-3 px-4 text-slate-500">${item.date || '-'}</td>
+              <td class="py-3 px-4 text-center font-black text-slate-800">${(item.finalScore || 0).toFixed(1)}%</td>
+              <td class="py-3 px-4 text-center">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${badgeColor}">${item.riskCategory || 'Pending'}</span>
+              </td>
+              <td class="py-3 px-4 text-right">
+                <button onclick="openExistingAudit('${item.id}')" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition flex items-center inline-flex">
+                  <i class="fa-solid fa-folder-open mr-1"></i>Buka
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        renderDataGridWithList(list);
+
+        // Update dashboard KPI counts
+        const lowCount = list.filter(a => a.finalScore >= 80).length;
+        const highCount = list.filter(a => a.finalScore > 0 && a.finalScore < 60).length;
+        const avgScore = list.length > 0 ? (list.reduce((acc, a) => acc + (a.finalScore || 0), 0) / list.length) : 0;
+
+        document.getElementById('dash-kpi-low').innerText = lowCount;
+        document.getElementById('dash-kpi-high').innerText = highCount;
+        document.getElementById('dash-kpi-avg').innerText = `${avgScore.toFixed(1)}%`;
+
+      } catch (err) {
+        console.error("Fetch audits error:", err);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-6 text-rose-500 font-semibold">Gagal memuatkan rekod dari pelayan: ${err.message}</td>
+          </tr>
+        `;
+      }
+    };
+
+    window.openExistingAudit = async function(auditId) {
+      if (!db) return;
+      showToast(`Membuka audit ${auditId}...`, "info");
+
+      try {
+        const snap = await getDoc(doc(db, "audits", auditId));
+        if (!snap.exists()) {
+          showToast(`Audit ${auditId} tidak dijumpai dalam pangkalan data.`, "warning");
+          return;
+        }
+
+        activeAuditId = auditId;
+        currentAuditData = { auditCode: auditId, ...snap.data() };
+
+        setupAuditRealtimeListener(auditId);
+        populateFormFromAuditData(currentAuditData);
+
+        document.getElementById('view-hub').classList.add('hidden');
+        document.getElementById('audit-nav-bar').classList.remove('hidden');
+        document.getElementById('header-audit-badge').classList.remove('hidden');
+        document.getElementById('header-audit-code-disp').innerText = auditId;
+        document.getElementById('btn-return-hub').classList.remove('hidden');
+
+        switchView('form');
+        showToast(`Audit ${auditId} dimuatkan secara langsung!`, "success");
+      } catch (err) {
+        showToast("Ralat memuatkan audit: " + err.message, "warning");
+      }
+    };
+
+    function renderPPEItems() {
+      const container = document.getElementById('ppe-items-container');
+      if (!container) return;
+
+      container.innerHTML = PPE_CRITERIA.map(item => `
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="flex items-start justify-between">
+            <div>
+              <span class="text-xs font-extrabold text-emerald-700">CRITERIA ${item.id}</span>
+              <h4 class="text-sm font-bold text-slate-900 mt-0.5">${item.title}</h4>
+              <p class="text-xs text-slate-500 mt-0.5">${item.desc}</p>
+            </div>
+            <label class="flex items-center space-x-1.5 text-xs font-bold text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer hover:border-slate-400">
+              <input type="radio" name="${item.id}" value="NA" class="text-slate-600 focus:ring-slate-400" onchange="calculateSectionE()">
+              <span>N/A (Tidak Berkaitan)</span>
+            </label>
+          </div>
+          <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+              <input type="radio" name="${item.id}" value="4" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
+              <div class="text-xs"><span class="font-bold text-slate-900">4 Marks:</span> Supplied + Used / Lengkap</div>
+            </label>
+            <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+              <input type="radio" name="${item.id}" value="3" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
+              <div class="text-xs"><span class="font-bold text-slate-900">3 Marks:</span> Supplied +/- Used</div>
+            </label>
+            <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+              <input type="radio" name="${item.id}" value="2" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
+              <div class="text-xs"><span class="font-bold text-slate-900">2 Marks:</span> Not used / Kurang teratur</div>
+            </label>
+            <label class="p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-500 flex items-start space-x-2">
+              <input type="radio" name="${item.id}" value="1" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" onchange="calculateSectionE()">
+              <div class="text-xs"><span class="font-bold text-slate-900">1 Mark:</span> Not supplied / Tiada latihan</div>
+            </label>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveAuditToFirestore() {
+      if (!db || !currentUser || !activeAuditId) return;
+      try {
+        const docRef = doc(db, "audits", activeAuditId);
+        const payload = {
+          ...currentAuditData,
+          lastEditedBy: currentUser.email || auditorProfile.name || 'Auditor',
+          lastEditedUid: currentUser.uid,
+          updatedAt: new Date().toISOString()
+        };
+        await setDoc(docRef, payload, { merge: true });
+        showToast("Synced with cloud database!", "success");
+      } catch (e) {
+        console.error("Save error:", e);
+      }
+    }
+
+    window.calculateSectionA = function() {
+      const r1 = document.querySelector('input[name="A1"]:checked');
+      const r2 = document.querySelector('input[name="A2"]:checked');
+      const r3 = document.querySelector('input[name="A3"]:checked');
+
+      if (!r1 && !r2 && !r3) {
+        currentAuditData.scores.A = { num: 0, denom: 12, pm: 0, weight: 20, weightedMark: 0 };
+        document.getElementById('score-num-A').innerText = 0;
+        document.getElementById('score-pct-A').innerText = "0.0";
+        calculateTotalRisk();
+        return;
+      }
+
+      const num = parseInt(r1?.value || 0) + parseInt(r2?.value || 0) + parseInt(r3?.value || 0);
+      const pm = (num / 12) * 100;
+      const wm = (pm * 0.20);
+
+      currentAuditData.scores.A = { num, denom: 12, pm, weight: 20, weightedMark: wm };
+      document.getElementById('score-num-A').innerText = num;
+      document.getElementById('score-pct-A').innerText = pm.toFixed(1);
+      calculateTotalRisk();
+    };
+
+    window.calculateSectionB = function() {
+      const r1 = document.querySelector('input[name="B1"]:checked');
+      const r3 = document.querySelector('input[name="B3"]:checked');
+      const r4 = document.querySelector('input[name="B4"]:checked');
+
+      if (!r1 && !r3 && !r4) {
+        currentAuditData.scores.B = { num: 0, denom: 12, pm: 0, weight: 15, weightedMark: 0 };
+        document.getElementById('score-num-B').innerText = 0;
+        document.getElementById('score-pct-B').innerText = "0.0";
+        calculateTotalRisk();
+        return;
+      }
+
+      const num = parseInt(r1?.value || 0) + parseInt(r3?.value || 0) + parseInt(r4?.value || 0);
+      const pm = (num / 12) * 100;
+      const wm = (pm * 0.15);
+
+      currentAuditData.scores.B = { num, denom: 12, pm, weight: 15, weightedMark: wm };
+      document.getElementById('score-num-B').innerText = num;
+      document.getElementById('score-pct-B').innerText = pm.toFixed(1);
+      calculateTotalRisk();
+    };
+
+    window.calculateSectionC = function() {
+      const radios = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6'].map(id => document.querySelector(`input[name="${id}"]:checked`));
+      const hasAny = radios.some(r => r !== null);
+
+      if (!hasAny) {
+        currentAuditData.scores.C = { num: 0, denom: 24, pm: 0, weight: 10, weightedMark: 0 };
+        document.getElementById('score-num-C').innerText = 0;
+        document.getElementById('score-pct-C').innerText = "0.0";
+        calculateTotalRisk();
+        return;
+      }
+
+      const num = radios.reduce((sum, r) => sum + parseInt(r?.value || 0), 0);
+      const pm = (num / 24) * 100;
+      const wm = (pm * 0.10);
+
+      currentAuditData.scores.C = { num, denom: 24, pm, weight: 10, weightedMark: wm };
+      document.getElementById('score-num-C').innerText = num;
+      document.getElementById('score-pct-C').innerText = pm.toFixed(1);
+      calculateTotalRisk();
+    };
+
+    window.calculateSectionD = function() {
+      const radios = ['D1', 'D2', 'D3', 'D4'].map(id => document.querySelector(`input[name="${id}"]:checked`));
+      const hasAny = radios.some(r => r !== null);
+
+      if (!hasAny) {
+        currentAuditData.scores.D = { num: 0, denom: 16, pm: 0, weight: 10, weightedMark: 0 };
+        document.getElementById('score-num-D').innerText = 0;
+        document.getElementById('score-pct-D').innerText = "0.0";
+        calculateTotalRisk();
+        return;
+      }
+
+      const num = radios.reduce((sum, r) => sum + parseInt(r?.value || 0), 0);
+      const pm = (num / 16) * 100;
+      const wm = (pm * 0.10);
+
+      currentAuditData.scores.D = { num, denom: 16, pm, weight: 10, weightedMark: wm };
+      document.getElementById('score-num-D').innerText = num;
+      document.getElementById('score-pct-D').innerText = pm.toFixed(1);
+      calculateTotalRisk();
+    };
+
+    window.calculateSectionE = function() {
+      let num = 0;
+      let validCount = 0;
+
+      PPE_CRITERIA.forEach(item => {
+        const val = document.querySelector(`input[name="${item.id}"]:checked`)?.value;
+        if (val && val !== 'NA') {
+          num += parseInt(val);
+          validCount++;
+        }
+      });
+
+      if (validCount === 0) {
+        currentAuditData.scores.E = { num: 0, denom: 28, tac: 0, pm: 0, weight: 15, weightedMark: 0 };
+        document.getElementById('score-num-E').innerText = 0;
+        document.getElementById('score-denom-E').innerText = 28;
+        document.getElementById('score-pct-E').innerText = "0.0";
+        calculateTotalRisk();
+        return;
+      }
+
+      const denom = (validCount * 4);
+      const pm = (num / denom) * 100;
+      const wm = (pm * 0.15);
+
+      currentAuditData.scores.E = { num, denom, tac: validCount, pm, weight: 15, weightedMark: wm };
+      document.getElementById('score-num-E').innerText = num;
+      document.getElementById('score-denom-E').innerText = denom;
+      document.getElementById('score-pct-E').innerText = pm.toFixed(1);
+      calculateTotalRisk();
+    };
+
+    window.calculateSectionF = function() {
+      let pm = 0;
+      if (activeEngMode === 'F1') {
+        const g1 = parseInt(document.getElementById('f1-1-1')?.value || 0);
+        const g3 = parseInt(document.getElementById('f1-1-3')?.value || 0);
+        const ach = parseInt(document.getElementById('f1-ach')?.value || 0);
+        const flow = parseInt(document.getElementById('f1-flow')?.value || 0);
+        const cross = parseInt(document.getElementById('f1-cross')?.value || 0);
+        const uv = parseInt(document.getElementById('f1-tech-uv')?.value || 0);
+
+        const genPct = ((g1 + g3) / 2) * 5;
+        const ventPct = ((ach + cross + flow) / 9) * 95;
+        const techBonus = uv ? 5 : 0;
+        pm = Math.min(100, genPct + ventPct + techBonus);
+      } else {
+        const anteroom = parseInt(document.getElementById('f2-anteroom')?.value || 0);
+        const ceiling = parseInt(document.getElementById('f2-ceiling')?.value || 0);
+        const neg = parseInt(document.getElementById('f2-neg-status')?.value || 0);
+        const ach = parseInt(document.getElementById('f2-ach')?.value || 0);
+        const monitor = parseInt(document.getElementById('f2-monitor')?.value || 0);
+        const flow = parseInt(document.getElementById('f2-flow')?.value || 0);
+        const cross = parseInt(document.getElementById('f2-cross')?.value || 0);
+        const roof = parseInt(document.getElementById('f2-roof')?.value || 0);
+        const hepa = parseInt(document.getElementById('f2-hepa')?.value || 0);
+
+        const genPct = ((anteroom + ceiling + neg) / 3) * 10;
+        const ventPct = ((ach + monitor + flow + (cross / 4)) / 4) * 70;
+        const exPct = ((roof + hepa) / 2) * 20;
+        pm = Math.min(100, genPct + ventPct + exPct);
+      }
+
+      const wm = (pm * 0.30);
+      currentAuditData.scores.F = { mode: activeEngMode, pm, weight: 30, weightedMark: wm };
+      document.getElementById('score-pct-F').innerText = pm.toFixed(1);
+      calculateTotalRisk();
+    };
+
+    window.calculateTotalRisk = function() {
+      const s = currentAuditData.scores;
+      const totalWeighted = (s.A?.weightedMark || 0) + (s.B?.weightedMark || 0) + (s.C?.weightedMark || 0) + (s.D?.weightedMark || 0) + (s.E?.weightedMark || 0) + (s.F?.weightedMark || 0);
+
+      currentAuditData.finalScore = totalWeighted;
+
+      let risk = "Pending Assessment";
+      let badgeClass = "bg-slate-200 text-slate-700";
+
+      if (totalWeighted > 0) {
+        if (totalWeighted >= 80) {
+          risk = "Low Risk / Rendah";
+          badgeClass = "bg-emerald-100 text-emerald-800 border border-emerald-300";
+        } else if (totalWeighted >= 60) {
+          risk = "Medium Risk / Sederhana";
+          badgeClass = "bg-amber-100 text-amber-800 border border-amber-300";
+        } else if (totalWeighted >= 40) {
+          risk = "High Risk / Tinggi";
+          badgeClass = "bg-orange-100 text-orange-800 border border-orange-300";
+        } else {
+          risk = "Critical Risk / Kritikal";
+          badgeClass = "bg-rose-100 text-rose-800 border border-rose-300";
+        }
+      }
+
+      currentAuditData.riskCategory = risk;
+
+      document.getElementById('disp-overall-score').innerText = totalWeighted.toFixed(1);
+      const badge = document.getElementById('disp-risk-badge');
+      badge.className = `px-3.5 py-2 rounded-xl text-center font-extrabold text-xs shadow-sm uppercase tracking-wide ${badgeClass}`;
+      badge.innerText = risk;
+
+      updateReportViewValues();
+    };
+
+    function calculateAll() {
+      calculateSectionA();
+      calculateSectionB();
+      calculateSectionC();
+      calculateSectionD();
+      calculateSectionE();
+      calculateSectionF();
+      calculateTotalRisk();
+    }
+
+    function updateReportViewValues() {
+      document.getElementById('rep-name').innerText = currentAuditData.facilityName || '-';
+      document.getElementById('rep-state').innerText = currentAuditData.state || '-';
+      document.getElementById('rep-dept').innerText = currentAuditData.department || '-';
+      document.getElementById('rep-subloc').innerText = currentAuditData.sublocation || '-';
+      document.getElementById('rep-staff').innerText = currentAuditData.totalStaff || '-';
+      document.getElementById('rep-beds').innerText = currentAuditData.totalBeds || '-';
+      document.getElementById('rep-date').innerText = currentAuditData.date || '-';
+      document.getElementById('rep-pic').innerText = currentAuditData.pic || '-';
+
+      const s = currentAuditData.scores;
+      document.getElementById('rep-tab-num-a').innerText = s.A?.num || 0;
+      document.getElementById('rep-tab-pm-a').innerText = `${(s.A?.pm || 0).toFixed(1)}%`;
+      document.getElementById('rep-tab-wm-a').innerText = (s.A?.weightedMark || 0).toFixed(1);
+
+      document.getElementById('rep-tab-num-b').innerText = s.B?.num || 0;
+      document.getElementById('rep-tab-pm-b').innerText = `${(s.B?.pm || 0).toFixed(1)}%`;
+      document.getElementById('rep-tab-wm-b').innerText = (s.B?.weightedMark || 0).toFixed(1);
+
+      document.getElementById('rep-tab-num-c').innerText = s.C?.num || 0;
+      document.getElementById('rep-tab-pm-c').innerText = `${(s.C?.pm || 0).toFixed(1)}%`;
+      document.getElementById('rep-tab-wm-c').innerText = (s.C?.weightedMark || 0).toFixed(1);
+
+      document.getElementById('rep-tab-num-d').innerText = s.D?.num || 0;
+      document.getElementById('rep-tab-pm-d').innerText = `${(s.D?.pm || 0).toFixed(1)}%`;
+      document.getElementById('rep-tab-wm-d').innerText = (s.D?.weightedMark || 0).toFixed(1);
+
+      document.getElementById('rep-tab-tac-e').innerText = s.E?.tac || 0;
+      document.getElementById('rep-tab-denom-e').innerText = s.E?.denom || 28;
+      document.getElementById('rep-tab-num-e').innerText = s.E?.num || 0;
+      document.getElementById('rep-tab-pm-e').innerText = `${(s.E?.pm || 0).toFixed(1)}%`;
+      document.getElementById('rep-tab-wm-e').innerText = (s.E?.weightedMark || 0).toFixed(1);
+
+      document.getElementById('rep-tab-f-title').innerText = `Environmental Control (${activeEngMode})`;
+      document.getElementById('rep-tab-pm-f').innerText = `${(s.F?.pm || 0).toFixed(1)}%`;
+      document.getElementById('rep-tab-wm-f').innerText = (s.F?.weightedMark || 0).toFixed(1);
+
+      document.getElementById('rep-final-score-val').innerText = `${currentAuditData.finalScore.toFixed(1)}%`;
+      document.getElementById('rep-risk-title').innerText = currentAuditData.riskCategory;
+
+      const lead = currentAuditData.auditors?.[0]?.name || auditorProfile.name || 'Lead Auditor';
+      document.getElementById('rep-sig-lead').innerText = lead;
+    }
+
+    window.switchView = function(view) {
+      document.getElementById('view-form').classList.add('hidden');
+      document.getElementById('view-report').classList.add('hidden');
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-data').classList.add('hidden');
+
+      ['form', 'report', 'dashboard', 'data'].forEach(v => {
+        const btn = document.getElementById(`nav-btn-${v}`);
+        if (btn) {
+          btn.classList.remove('bg-emerald-50', 'text-emerald-700');
+          btn.classList.add('text-slate-600');
+        }
+      });
+
+      document.getElementById(`view-${view}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`nav-btn-${view}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-600');
+        activeBtn.classList.add('bg-emerald-50', 'text-emerald-700');
+      }
+
+      if (view === 'report') updateReportViewValues();
+      if (view === 'dashboard') renderDashboard();
+      if (view === 'data') fetchAuditsList();
+    };
+
+    window.switchSection = function(sec) {
+      activeSection = sec;
+      document.querySelectorAll('.sec-pane').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`section-pane-${sec}`).classList.remove('hidden');
+
+      document.querySelectorAll('.sec-pill-btn').forEach(btn => {
+        btn.classList.remove('bg-emerald-600', 'text-white');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+      });
+
+      const currentBtn = document.querySelector(`.sec-pill-btn[data-sec="${sec}"]`);
+      if (currentBtn) {
+        currentBtn.classList.remove('bg-slate-100', 'text-slate-600');
+        currentBtn.classList.add('bg-emerald-600', 'text-white');
+      }
+    };
+
+    window.setEngineeringMode = function(mode) {
+      activeEngMode = mode;
+      const btnF1 = document.getElementById('btn-f-mode-f1');
+      const btnF2 = document.getElementById('btn-f-mode-f2');
+      const subF1 = document.getElementById('subform-f1');
+      const subF2 = document.getElementById('subform-f2');
+
+      if (mode === 'F1') {
+        btnF1.className = "flex-1 py-2 text-xs font-bold rounded-lg transition bg-white text-emerald-700 shadow-sm";
+        btnF2.className = "flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900";
+        subF1.classList.remove('hidden');
+        subF2.classList.add('hidden');
+      } else {
+        btnF2.className = "flex-1 py-2 text-xs font-bold rounded-lg transition bg-white text-emerald-700 shadow-sm";
+        btnF1.className = "flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900";
+        subF2.classList.remove('hidden');
+        subF1.classList.add('hidden');
+      }
+      calculateSectionF();
+      markDirty();
+    };
+
+    window.markDirty = function() {
+      currentAuditData.facilityName = document.getElementById('inp-facility-name').value;
+      currentAuditData.state = document.getElementById('inp-state').value;
+      currentAuditData.address = document.getElementById('inp-facility-address').value;
+      currentAuditData.department = document.getElementById('inp-department').value;
+      currentAuditData.sublocation = document.getElementById('inp-sublocation').value;
+      currentAuditData.date = document.getElementById('inp-assessment-date').value;
+      currentAuditData.totalStaff = parseInt(document.getElementById('inp-total-staff').value || 0);
+      currentAuditData.totalBeds = parseInt(document.getElementById('inp-total-beds').value || 0);
+      currentAuditData.pic = document.getElementById('inp-pic-info').value;
+
+      document.getElementById('disp-facility-name').innerText = currentAuditData.facilityName || 'Facility';
+      document.getElementById('disp-sublocation').innerText = currentAuditData.sublocation || 'Location unassigned';
+      document.getElementById('current-state-badge').innerText = currentAuditData.state || 'State';
+    };
+
+    window.saveCurrentSection = function() {
+      markDirty();
+      calculateAll();
+      saveAuditToFirestore();
+    };
+
+    let chartRiskInstance = null;
+    let chartRadarInstance = null;
+
+    function renderDashboard() {
+      const ctxDonut = document.getElementById('chartRiskTiers')?.getContext('2d');
+      if (ctxDonut) {
+        if (chartRiskInstance) chartRiskInstance.destroy();
+        chartRiskInstance = new Chart(ctxDonut, {
+          type: 'doughnut',
+          data: {
+            labels: ['Low Risk', 'Medium Risk', 'High Risk', 'Critical'],
+            datasets: [{
+              data: [
+                currentAuditData.finalScore >= 80 ? 1 : 0,
+                currentAuditData.finalScore >= 60 && currentAuditData.finalScore < 80 ? 1 : 0,
+                currentAuditData.finalScore >= 40 && currentAuditData.finalScore < 60 ? 1 : 0,
+                currentAuditData.finalScore > 0 && currentAuditData.finalScore < 40 ? 1 : 0,
+              ],
+              backgroundColor: ['#10b981', '#f59e0b', '#f97316', '#ef4444'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+            cutout: '70%'
+          }
+        });
+      }
+
+      const ctxRadar = document.getElementById('chartSectionRadar')?.getContext('2d');
+      if (ctxRadar) {
+        if (chartRadarInstance) chartRadarInstance.destroy();
+        const s = currentAuditData.scores;
+        chartRadarInstance = new Chart(ctxRadar, {
+          type: 'radar',
+          data: {
+            labels: ['A: Mgmt (20%)', 'B: Burden (15%)', 'C: Screen (10%)', 'D: Notis (10%)', 'E: PPE (15%)', 'F: Eng (30%)'],
+            datasets: [
+              {
+                label: `${currentAuditData.facilityName || 'Current Facility'} (%)`,
+                data: [s.A?.pm || 0, s.B?.pm || 0, s.C?.pm || 0, s.D?.pm || 0, s.E?.pm || 0, s.F?.pm || 0],
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                borderColor: '#10b981',
+                pointBackgroundColor: '#10b981',
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { r: { min: 0, max: 100, ticks: { stepSize: 25, font: { size: 9 } } } },
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+          }
+        });
+      }
+
+      document.getElementById('dash-kpi-avg').innerText = `${currentAuditData.finalScore.toFixed(1)}%`;
+      document.getElementById('dash-kpi-tier-desc').innerText = currentAuditData.riskCategory;
+    }
+
+    function renderDataGridWithList(list) {
+      const tbody = document.getElementById('data-grid-tbody');
+      if (!tbody) return;
+
+      tbody.innerHTML = list.map(item => {
+        let badgeColor = item.finalScore >= 80 ? 'bg-emerald-100 text-emerald-800' :
+                         item.finalScore >= 60 ? 'bg-amber-100 text-amber-800' :
+                         item.finalScore > 0 ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600';
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-4 font-mono font-bold text-slate-800">${item.id}</td>
+            <td class="py-3 px-4 font-bold text-slate-900">${item.facilityName || 'Unnamed'}</td>
+            <td class="py-3 px-4 text-slate-600">${item.state || '-'}</td>
+            <td class="py-3 px-4 text-slate-500">${item.date || '-'}</td>
+            <td class="py-3 px-4 text-center font-bold text-slate-800">${(item.finalScore || 0).toFixed(1)}%</td>
+            <td class="py-3 px-4 text-center">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${badgeColor}">${item.riskCategory || 'Pending'}</span>
+            </td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="openExistingAudit('${item.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
+                <i class="fa-solid fa-folder-open mr-1"></i>Open
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.exportToCSV = function() {
+      const headers = ["Audit_ID", "Facility_Name", "State", "Date", "Sec_A_Pct", "Sec_B_Pct", "Sec_C_Pct", "Sec_D_Pct", "Sec_E_Pct", "Sec_F_Pct", "Final_Score", "Risk_Category"];
+      const s = currentAuditData.scores;
+      const row = [
+        currentAuditData.auditCode || activeAuditId,
+        `"${currentAuditData.facilityName || 'Facility'}"`,
+        currentAuditData.state,
+        currentAuditData.date,
+        s.A?.pm?.toFixed(1) || 0,
+        s.B?.pm?.toFixed(1) || 0,
+        s.C?.pm?.toFixed(1) || 0,
+        s.D?.pm?.toFixed(1) || 0,
+        s.E?.pm?.toFixed(1) || 0,
+        s.F?.pm?.toFixed(1) || 0,
+        currentAuditData.finalScore.toFixed(1),
+        `"${currentAuditData.riskCategory}"`
+      ];
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), row.join(",")].join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `TB_FRAT_${currentAuditData.auditCode || 'Assessment'}_Data.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("CSV dataset downloaded", "success");
+    };
+
+    window.exportForAI = function() {
+      const s = currentAuditData.scores;
+      const aiPromptText = `
+### TB FRAT 2026 Healthcare Facility Assessment Payload
+**Facility Name:** ${currentAuditData.facilityName}
+**State & Location:** ${currentAuditData.state} (${currentAuditData.sublocation})
+**Date of Audit:** ${currentAuditData.date}
+**Overall Weighted Score:** ${currentAuditData.finalScore.toFixed(1)}%
+**Assigned Risk Tier:** ${currentAuditData.riskCategory}
+
+#### Section Breakdown:
+- Section A (Workplace Management, 20%): ${s.A?.pm?.toFixed(1)}%
+- Section B (TB Infection Burden, 15%): ${s.B?.pm?.toFixed(1)}%
+- Section C (TB Screening Programme, 10%): ${s.C?.pm?.toFixed(1)}%
+- Section D (TB Notification Compliance, 10%): ${s.D?.pm?.toFixed(1)}%
+- Section E (PPE & Respiratory Protection, 15%): ${s.E?.pm?.toFixed(1)}%
+- Section F (Environmental/Engineering AIIR Control, 30%): ${s.F?.pm?.toFixed(1)}%
+
+**Task for AI Clinical Analyst:**
+Provide a 30-day corrective action plan for the Hospital Director, highlighting specific infection control priorities to reduce healthcare worker transmission risks according to Ministry of Health Malaysia 2026 Guidelines.
+      `.trim();
+
+      const tempInput = document.createElement("textarea");
+      tempInput.value = aiPromptText;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+
+      showToast("AI Prompt Package copied to clipboard!", "success");
+    };
+
+    function showToast(msg, type = "info") {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-message');
+      const icon = document.getElementById('toast-icon');
+
+      text.innerText = msg;
+      if (type === "success") {
+        icon.className = "fa-solid fa-circle-check text-emerald-400 text-sm";
+      } else if (type === "warning") {
+        icon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-sm";
+      } else {
+        icon.className = "fa-solid fa-circle-info text-blue-400 text-sm";
+      }
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
