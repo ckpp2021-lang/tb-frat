@@ -2144,6 +2144,33 @@
       localStorage.setItem('tb_frat_dark_mode', isDark ? 'dark' : 'light');
     };
 
+    let currentFontScale = 100;
+
+    window.adjustFontSize = function(delta) {
+      currentFontScale = Math.min(145, Math.max(85, currentFontScale + (delta * 10)));
+      applyFontScale();
+    };
+
+    window.resetFontSize = function() {
+      currentFontScale = 100;
+      applyFontScale();
+    };
+
+    function applyFontScale() {
+      document.documentElement.style.fontSize = `${currentFontScale}%`;
+      localStorage.setItem('tb_frat_font_scale', currentFontScale);
+      const disp = document.getElementById('btn-font-scale-disp');
+      if (disp) disp.innerText = `${currentFontScale}%`;
+    }
+
+    function initFontScale() {
+      const saved = localStorage.getItem('tb_frat_font_scale');
+      if (saved) {
+        currentFontScale = parseInt(saved, 10) || 100;
+      }
+      applyFontScale();
+    }
+
     function initTheme() {
       const saved = localStorage.getItem('tb_frat_dark_mode');
       if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -3420,6 +3447,7 @@ Generate a formal 30-day intervention strategy conforming to Guidelines on Preve
 
     window.addEventListener('DOMContentLoaded', async () => {
       initTheme();
+      initFontScale();
       loadAuditorProfileFromStorage();
       renderPPEItems();
       const dateEl = document.getElementById('new-audit-date');
