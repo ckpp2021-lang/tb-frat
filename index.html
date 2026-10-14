@@ -2152,6 +2152,58 @@
       { id: 'E7', title: '7. Evidence of competency / compliance regarding PPE', desc: 'Kompetensi: Ilmu, kesesuaian, teknik penggunaan, pelupusan' }
     ];
 
+    /* -------------------------------------------------------------------------
+       CRITERIA GUIDES REGISTRY (Declared before renderPPEItems)
+       ------------------------------------------------------------------------- */
+    const CRITERIA_GUIDES = {
+      'A2': {
+        title: 'Panduan A.2: Aliran Triage Pesakit Disyaki TB',
+        imagePath: './guides/triage-point-of-entry.jpg',
+        caption: 'Sistem triage di pintu masuk: Pesakit yang mempunyai gejala batuk >2 minggu diasingkan serta-merta, dibekalkan pelitup muka pembedahan, dan diletakkan di ruang menunggu berventilasi baik sebelum pemeriksaan.'
+      },
+      'E3': {
+        title: 'Panduan E.3: Ujian Pengedapan (Seal Check) Respirator N95',
+        imagePath: './guides/n95-seal-check.jpg',
+        caption: 'Ujian Pengedapan Positif: Hembus perlahan, tiada kebocoran udara di tepi muka. Ujian Pengedapan Negatif: Tarik nafas dalam, respirator melekap sedikit tanpa kebocoran di sekeliling kedap muka.'
+      },
+      'E4': {
+        title: 'Panduan E.4: Pemakaian & Pemeriksaan PAPR Semasa Prosedur AGP',
+        imagePath: './guides/papr-agp-usage.jpg',
+        caption: 'Penggunaan PAPR semasa prosedur menghasilkan aerosol (AGP) seperti intubasi, bronkoskopi, atau autopsi. Pastikan bateri dicas sepenuhnya, penapis HEPA berkeadaan baik, dan ujian aliran udara (flow check) lulus sebelum masuk ke bilik pesakit.'
+      }
+    };
+
+    window.openGuideModal = function(criteriaId) {
+      const guide = CRITERIA_GUIDES[criteriaId];
+      if (!guide) return;
+
+      const modal = document.getElementById('modal-guide-viewer');
+      const titleEl = document.getElementById('guide-modal-title');
+      const captionEl = document.getElementById('guide-modal-caption');
+      const codeEl = document.getElementById('guide-modal-code');
+      const imgEl = document.getElementById('guide-modal-img');
+      const fallbackFilename = document.getElementById('guide-fallback-filename');
+      const fallbackBox = document.getElementById('guide-img-fallback');
+
+      if (titleEl) titleEl.innerText = guide.title;
+      if (captionEl) captionEl.innerText = guide.caption;
+      if (codeEl) codeEl.innerText = `KRITERIA ${criteriaId}`;
+      if (fallbackFilename) fallbackFilename.innerText = `Fail: ${guide.imagePath}`;
+
+      if (imgEl && fallbackBox) {
+        imgEl.classList.add('hidden');
+        fallbackBox.classList.remove('hidden');
+        imgEl.src = guide.imagePath;
+      }
+
+      if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeGuideModal = function() {
+      const modal = document.getElementById('modal-guide-viewer');
+      if (modal) modal.classList.add('hidden');
+    };
+
     window.toggleDarkMode = function() {
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('tb_frat_dark_mode', isDark ? 'dark' : 'light');
@@ -2233,11 +2285,21 @@
     window.renderPPEItems = function() {
       const container = document.getElementById('ppe-items-container');
       if (!container) return;
-      container.innerHTML = PPE_CRITERIA.map((item) => `
+      container.innerHTML = PPE_CRITERIA.map((item) => {
+        const hasGuide = CRITERIA_GUIDES[item.id];
+        return `
         <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700" id="card-${item.id}">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400">CRITERIA ${item.id}</span>
-            <span class="text-[10px] text-slate-400 font-semibold">Weight: 15% TAC Denom</span>
+            <div class="flex items-center space-x-2">
+              ${hasGuide ? `
+                <button type="button" onclick="openGuideModal('${item.id}')" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline inline-flex items-center space-x-1">
+                  <i class="fa-regular fa-image"></i>
+                  <span>Panduan Bergambar</span>
+                </button>
+              ` : ''}
+              <span class="text-[10px] text-slate-400 font-semibold">Weight: 15% TAC Denom</span>
+            </div>
           </div>
           <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-0.5">${item.title}</h4>
           <p class="text-[11px] text-slate-500 dark:text-slate-400">${item.desc}</p>
@@ -2269,7 +2331,8 @@
             <input type="text" id="note-${item.id}" placeholder="Catatan / Notes ${item.id}..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-emerald-500" oninput="markDirty()">
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     };
 
     function getRadioVal(name) {
@@ -2886,6 +2949,14 @@
         if (document.getElementById('rep-recom-text')) document.getElementById('rep-recom-text').value = data.remarks.recommendations || '';
       }
 
+      // Restore Page 20 remarks and recommendations
+      if (data.page20) {
+        ['A','B','C','D','E','F'].forEach(sec => {
+          if (document.getElementById(`p20-rem-${sec}`)) document.getElementById(`p20-rem-${sec}`).value = data.page20.remarks?.[sec] || '';
+          if (document.getElementById(`p20-rec-${sec}`)) document.getElementById(`p20-rec-${sec}`).value = data.page20.recommendations?.[sec] || '';
+        });
+      }
+
       renderAuditorTableRows(data.auditors || []);
       calculateAll();
     }
@@ -3390,6 +3461,29 @@ Generate a formal 30-day intervention strategy conforming to Guidelines on Preve
       if (!facility) {
         showToast("Sila masukkan nama fasiliti.", "warning");
         return;
+      }
+
+      if (!code) {
+        showToast("Sila masukkan atau jana Kod Audit.", "warning");
+        return;
+      }
+
+      /* -------------------------------------------------------------------------
+         UNIQUE AUDIT ID ENFORCEMENT:
+         Verify whether the audit ID already exists in Firestore database.
+         ------------------------------------------------------------------------- */
+      if (db) {
+        try {
+          const checkDocRef = doc(db, "audits", code);
+          const checkDocSnap = await getDoc(checkDocRef);
+          if (checkDocSnap.exists()) {
+            showToast(`Ralat: Kod Audit "${code}" telah digunakan! Sila tekan 'Regenerate' untuk kod unik baru.`, "warning");
+            generateAuditIdString();
+            return;
+          }
+        } catch (err) {
+          console.warn("Audit ID uniqueness check notice:", err);
+        }
       }
 
       activeAuditId = code;
